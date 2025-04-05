@@ -43,3 +43,13 @@ def update_lead(lead_id: str, updated_data: LeadCreate):
             save_leads(leads_db)
             return updated_lead
     raise HTTPException(status_code=404, detail="Lead nicht gefunden")
+
+# DELETE 🗑️ Lead löschen
+@app.delete("/leads/{lead_id}", response_model=Lead)
+def delete_lead(lead_id: str):
+    for lead in leads_db:
+        if lead.id == lead_id:
+            leads_db.remove(lead)
+            save_leads()  # Persistenz sicherstellen!
+            return lead
+    raise HTTPException(status_code=404, detail="Lead nicht gefunden")

@@ -4,7 +4,25 @@ import LeadForm from "./components/LeadForm.jsx";
 function App() {
   const [leads, setLeads] = useState([]);
   const [editingLead, setEditingLead] = useState(null);
-
+ 
+  const handleDeleteLead = (id) => {
+    const confirmed = window.confirm("Möchtest du diesen Lead wirklich löschen?");
+    if (!confirmed) return;
+  
+    fetch(`http://localhost:8000/leads/${id}`, {
+      method: "DELETE",
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Fehler beim Löschen");
+        }
+        setLeads((prevLeads) => prevLeads.filter((lead) => lead.id !== id));
+      })
+      .catch((err) => {
+        console.error("Löschen fehlgeschlagen:", err);
+      });
+  };
+  
   // Leads laden beim Start
   useEffect(() => {
     fetch("http://localhost:8000/leads")
@@ -64,6 +82,13 @@ function App() {
             >
               Bearbeiten
             </button>
+
+            <button
+      onClick={() => handleDeleteLead(lead.id)}
+      className="mt-2 ml-2 bg-red-500 text-white px-3 py-1 rounded"
+    >
+      Löschen
+    </button>
           </div>
         ))}
       </div>

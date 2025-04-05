@@ -3,7 +3,7 @@
     "firma": "Stahlbau Maier GmbH",
     "branche": "Metallbauer",
     "website": "https://maier-stahl.de",
-    "bewertung": 96,
+    "bewertung": 30,
     "status": "neu",
     "id": "e6a4568b-9062-4bfc-80ba-d0d5f17d1e1a"
   },
@@ -11,7 +11,7 @@
     "firma": "AluTec AG",
     "branche": "Fassadenbau",
     "website": "https://alutec.de",
-    "bewertung": 67,
+    "bewertung": 65,
     "status": "kontaktiert",
     "id": "084da389-702b-4cee-b94a-64a701556e5d"
   },
@@ -19,7 +19,7 @@
     "firma": "Schlosserei Bauer",
     "branche": "Handwerk",
     "website": "https://bauer-schlosserei.de",
-    "bewertung": 91,
+    "bewertung": 83,
     "status": "interessiert",
     "id": "d960d94f-a5b4-4056-bb35-4286715a189c"
   },
@@ -30,13 +30,5 @@
     "bewertung": 99,
     "status": "kontaktiert",
     "id": "75925af8-3e2f-40b7-be23-8d3df9d2f586"
-  },
-  {
-    "firma": "Stahlbau Maier GmbH",
-    "branche": "Metallbauer",
-    "website": "https://maier-stahl.de",
-    "bewertung": 96,
-    "status": "neu",
-    "id": "f5c48288-30c0-438a-b518-1989fb6be390"
   }
 ]

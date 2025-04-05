@@ -17,13 +17,13 @@ const LeadDetailPopup = ({ lead, onClose, onSave }) => {
     onSave(formData);
     onClose();
   };
-  function handleSave(e) {
-    e.preventDefault();
-    // Du kannst hier später das eigentliche Speichern einbauen
-    console.log("Speichern gedrückt");
-    onClose(); // Popup schließen nach dem Speichern
-  }
-  
+function handleSave(e) {
+  e.preventDefault();
+  // Du kannst hier später das eigentliche Speichern einbauen
+  console.log("Speichern gedrückt");
+  onClose(); // Popup schließen nach dem Speichern
+}
+
   return createPortal(
     <div
       style={{

@@ -62,6 +62,7 @@ function App() {
     if (score >= 70) return "bg-yellow-500";
     return "bg-red-500";
   };
+  console.log("Selected Lead:", selectedLead);
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
@@ -142,6 +143,7 @@ function App() {
     onSave={(updatedLead) => handleUpdateLead(updatedLead.id, updatedLead)}
   />
 )}
+
 
  
 

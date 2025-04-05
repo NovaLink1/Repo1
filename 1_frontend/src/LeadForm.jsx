@@ -4,8 +4,9 @@ const LeadForm = ({ onAddLead, onUpdateLead, initialData }) => {
   const [firma, setFirma] = useState("");
   const [branche, setBranche] = useState("");
   const [website, setWebsite] = useState("");
-  const [bewertung, setBewertung] = useState("");
   const [status, setStatus] = useState("neu");
+  const [bewertung, setBewertung] = useState("");
+  
 
   // Wenn initialData existiert, übernehmen wir die vorhandenen Werte
   useEffect(() => {
@@ -13,37 +14,28 @@ const LeadForm = ({ onAddLead, onUpdateLead, initialData }) => {
       setFirma(initialData.firma);
       setBranche(initialData.branche);
       setWebsite(initialData.website);
-      setBewertung(initialData.bewertung.toString());
       setStatus(initialData.status);
+      setBewertung(initialData.bewertung.toString());
     }
   }, [initialData]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const leadData = {
-      firma,
-      branche,
-      website,
-      bewertung: parseInt(bewertung),
-      status,
-    };
-
-    if (initialData) {
-      onUpdateLead(initialData.id, leadData);
-    } else {
-      onAddLead(leadData);
-    }
-
-    // Felder zurücksetzen (nur bei Neuerstellung)
-    if (!initialData) {
-      setFirma("");
-      setBranche("");
-      setWebsite("");
-      setBewertung("");
-      setStatus("neu");
-    }
-  };
+  if (initialData) {
+    onUpdateLead(initialData.id, leadData);
+    setFirma("");
+    setBranche("");
+    setWebsite("");
+    setStatus("neu");
+    setBewertung("");
+  } else {
+    onAddLead(leadData);
+    setFirma("");
+    setBranche("");
+    setWebsite("");
+    setStatus("neu");
+    setBewertung("");
+  }
+  
+  
 
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-xl p-6 mb-6 border border-gray-200 space-y-4">
@@ -75,19 +67,20 @@ const LeadForm = ({ onAddLead, onUpdateLead, initialData }) => {
         />
         <input
           className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          placeholder="Status"
+          required
+        />
+        <input
+          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
           value={bewertung}
           onChange={(e) => setBewertung(e.target.value)}
           type="number"
           placeholder="Bewertung"
           required
         />
-        <input
-          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          placeholder="Status"
-          required
-        />
+      
       </div>
   
       <button

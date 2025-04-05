@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import LeadForm from "./components/LeadForm.jsx";
+import LeadDetailPopup from "./components/LeadDetailPopup";
+
 
 function App() {
   const [leads, setLeads] = useState([]);
@@ -71,7 +73,10 @@ function App() {
         initialData={editingLead}
       />
 
+
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="bg-green-500 text-white p-4">Test</div>
+
         {leads.map((lead) => (
           <div
             key={lead.id}
@@ -131,75 +136,15 @@ function App() {
       </div>
 
       {selectedLead && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 9999,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
-              position: "relative",
-              width: "400px",
-              maxWidth: "90%",
-            }}
-          >
-            <button
-              onClick={() => setSelectedLead(null)}
-              style={{
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                padding: "5px 10px",
-                cursor: "pointer",
-              }}
-            >
-              ✖ Schließen
-            </button>
+  <LeadDetailPopup
+    lead={selectedLead}
+    onClose={() => setSelectedLead(null)}
+    onSave={(updatedLead) => handleUpdateLead(updatedLead.id, updatedLead)}
+  />
+)}
 
-            <h2
-              style={{
-                fontSize: "20px",
-                marginBottom: "10px",
-                fontWeight: "bold",
-              }}
-            >
-              {selectedLead.firma}
-            </h2>
+ 
 
-            <p>
-              <strong>Branche:</strong> {selectedLead.branche}
-            </p>
-
-            <p>
-              <strong>Website:</strong>{" "}
-              <a href={selectedLead.website} target="_blank" rel="noreferrer">
-                {selectedLead.website}
-              </a>
-            </p>
-
-            <p>
-              <strong>Status:</strong> {selectedLead.status}
-            </p>
-
-            <p>
-              <strong>Bewertung:</strong> {selectedLead.bewertung}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

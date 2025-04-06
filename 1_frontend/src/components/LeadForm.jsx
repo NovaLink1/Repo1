@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 
-const LeadForm = ({ onAddLead, onUpdateLead, initialData }) => {
+const LeadForm = ({ onAdd, initialData, onUpdateLead, onClose }) => {
   const [firma, setFirma] = useState("");
   const [branche, setBranche] = useState("");
   const [website, setWebsite] = useState("");
   const [bewertung, setBewertung] = useState("");
   const [status, setStatus] = useState("neu");
 
-  // Wenn initialData existiert, übernehmen wir die vorhandenen Werte
   useEffect(() => {
     if (initialData) {
       setFirma(initialData.firma);
@@ -32,17 +31,17 @@ const LeadForm = ({ onAddLead, onUpdateLead, initialData }) => {
     if (initialData) {
       onUpdateLead(initialData.id, leadData);
     } else {
-      onAddLead(leadData);
+      onAdd(leadData);
     }
 
-    // Felder zurücksetzen (nur bei Neuerstellung)
-    if (!initialData) {
-      setFirma("");
-      setBranche("");
-      setWebsite("");
-      setBewertung("");
-      setStatus("neu");
-    }
+    // Felder zurücksetzen bei neuer Erstellung
+    setFirma("");
+    setBranche("");
+    setWebsite("");
+    setBewertung("");
+    setStatus("neu");
+
+    if (onClose) onClose(); // Formular schließen
   };
 
   return (

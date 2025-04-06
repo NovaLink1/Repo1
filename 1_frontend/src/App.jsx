@@ -1,134 +1,57 @@
+
 import React, { useState, useEffect } from "react";
-import LeadForm from "./components/LeadForm.jsx";
+import LeadForm from "./components/LeadForm";
 import LeadDetailPopup from "./components/LeadDetailPopup";
 
-
-function App() {
+const App = () => {
   const [leads, setLeads] = useState([]);
-  const [editingLead, setEditingLead] = useState(null);
   const [selectedLead, setSelectedLead] = useState(null);
 
   useEffect(() => {
     fetch("http://localhost:8000/leads")
-      .then((res) => {
-        if (!res.ok) throw new Error("Fehler beim Laden der Leads");
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => setLeads(data))
-      .catch((err) => console.error("Fehler:", err));
+      .catch((err) => console.error("Fehler beim Laden der Leads:", err));
   }, []);
 
   const handleAddLead = (newLead) => {
-    fetch("http://localhost:8000/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newLead),
-    })
-      .then((res) => res.json())
-      .then((createdLead) => setLeads((prev) => [...prev, createdLead]));
-  };
-
-  const handleUpdateLead = (id, updatedData) => {
-    fetch(`http://localhost:8000/leads/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedData),
-    })
-      .then((res) => res.json())
-      .then((updatedLead) => {
-        setLeads((prevLeads) =>
-          prevLeads.map((lead) => (lead.id === id ? updatedLead : lead))
-        );
-        setEditingLead(null);
-      });
+    setLeads((prevLeads) => [...prevLeads, newLead]);
   };
 
   const handleDeleteLead = (id) => {
-    const confirmed = window.confirm("Möchtest du diesen Lead wirklich löschen?");
-    if (!confirmed) return;
-
-    fetch(`http://localhost:8000/leads/${id}`, {
-      method: "DELETE",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Fehler beim Löschen");
-        setLeads((prev) => prev.filter((lead) => lead.id !== id));
-      })
-      .catch((err) => console.error("Löschen fehlgeschlagen:", err));
+    fetch(`http://localhost:8000/leads/${id}`, { method: "DELETE" })
+      .then(() => setLeads((prevLeads) => prevLeads.filter((lead) => lead.id !== id)))
+      .catch((err) => console.error("Fehler beim Löschen:", err));
   };
 
-  const getScoreColor = (score) => {
-    if (score >= 85) return "bg-green-500";
-    if (score >= 70) return "bg-yellow-500";
-    return "bg-red-500";
+  const handleUpdateLead = (id, updatedLead) => {
+    setLeads((prevLeads) =>
+      prevLeads.map((lead) => (lead.id === id ? updatedLead : lead))
+    );
   };
-  console.log("Selected Lead:", selectedLead);
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">LeadNova CRM 💡</h1>
-
-      <LeadForm
-        onAddLead={handleAddLead}
-        onUpdateLead={handleUpdateLead}
-        initialData={editingLead}
-      />
-
-
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div className="bg-green-500 text-white p-4">Test</div>
-
+    <div className="p-8">
+      <h1 className="text-3xl font-bold mb-6">LeadNova CRM 💡</h1>
+      <LeadForm onAdd={handleAddLead} />
+      <div className="space-y-4 mt-8">
         {leads.map((lead) => (
-          <div
-            key={lead.id}
-            className="bg-white shadow-md rounded-xl p-4 border border-gray-200"
-          >
-            <h2 className="text-xl font-semibold mb-2 flex items-center justify-between">
-              <span
-                onClick={() => setSelectedLead(lead)}
-                className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
-              >
-                {lead.firma}
-              </span>
-              <span
-                className={`inline-block w-4 h-4 rounded-full flex-shrink-0 ${getScoreColor(lead.bewertung)}`}
-                title={`Score: ${lead.bewertung}`}
-              />
-            </h2>
-            <div className="flex flex-wrap gap-4 text-sm text-gray-700 ml-6 mb-3">
-              <span>
-                <strong>🏭 Branche:</strong> {lead.branche}
-              </span>
-              <span>
-                <strong>🌐 Website:</strong>{" "}
-                <a
-                  href={lead.website}
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {lead.website}
-                </a>
-              </span>
-              <span>
-                <strong>📍 Status:</strong> {lead.status}
-              </span>
-              <span>
-                <strong>⭐ Bewertung:</strong> {lead.bewertung}
-              </span>
-            </div>
-
-            <div className="mt-2 flex space-x-2">
-              <button
-                onClick={() => setEditingLead(lead)}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-              >
+          <div key={lead.id} className="border p-4 rounded shadow bg-white">
+            <h2 className="text-xl font-semibold">{lead.firma}</h2>
+            <p>
+              <span className="font-bold">🏗️ Branche:</span> {lead.branche}{" "}
+              <span className="font-bold">🌐 Website:</span>{" "}
+              <a href={lead.website} className="text-blue-600" target="_blank" rel="noreferrer">
+                {lead.website}
+              </a>{" "}
+              <span className="font-bold">📍 Status:</span> {lead.status}{" "}
+              <span className="font-bold">⭐ Bewertung:</span> {lead.bewertung}
+            </p>
+            <div className="mt-2 space-x-2">
+              <button onClick={() => setSelectedLead(lead)} className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
                 Bearbeiten
               </button>
-              <button
-                onClick={() => handleDeleteLead(lead.id)}
-                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-              >
+              <button onClick={() => handleDeleteLead(lead.id)} className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
                 Löschen
               </button>
             </div>
@@ -137,18 +60,14 @@ function App() {
       </div>
 
       {selectedLead && (
-  <LeadDetailPopup
-    lead={selectedLead}
-    onClose={() => setSelectedLead(null)}
-    onSave={(updatedLead) => handleUpdateLead(updatedLead.id, updatedLead)}
-  />
-)}
-
-
- 
-
+        <LeadDetailPopup
+          lead={selectedLead}
+          onClose={() => setSelectedLead(null)}
+          onSave={(updatedLead) => handleUpdateLead(updatedLead.id, updatedLead)}
+        />
+      )}
     </div>
   );
-}
+};
 
 export default App;

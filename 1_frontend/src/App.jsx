@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import LeadForm from "./components/LeadForm";
+import AddLeadPopup from "./components/AddLeadPopup";
 import LeadDetailPopup from "./components/LeadDetailPopup";
 
 const App = () => {
@@ -52,8 +52,8 @@ const App = () => {
         LeadNova CRM <span>💡</span>
       </h1>
       <p className="text-red-500 text-xl font-bold underline">
-  ✅ Tailwind ist aktiv!
-</p>
+        ✅ Tailwind ist aktiv!
+      </p>
 
       {/* Floating Action Button */}
       <button
@@ -63,9 +63,9 @@ const App = () => {
         + Neuer Lead
       </button>
 
-      {/* LeadForm bei Bedarf anzeigen */}
+      {/* Popup für neuen Lead */}
       {showAddForm && (
-        <LeadForm
+        <AddLeadPopup
           onAdd={(newLead) => {
             handleAddLead(newLead);
             setShowAddForm(false);

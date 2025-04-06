@@ -30,5 +30,29 @@
     "bewertung": 99,
     "status": "kontaktiert",
     "id": "75925af8-3e2f-40b7-be23-8d3df9d2f586"
+  },
+  {
+    "firma": "kve",
+    "branche": "systembau",
+    "website": "https://kve-system.com",
+    "bewertung": 85,
+    "status": "neu",
+    "id": "ea4b20f4-3fbd-441b-94c7-393c4e06e6b4"
+  },
+  {
+    "firma": "testfirma",
+    "branche": "xy",
+    "website": "tztztz",
+    "bewertung": 12,
+    "status": "neu",
+    "id": "27c9bcff-324b-425c-92c1-165db5d3a326"
+  },
+  {
+    "firma": "Mustermaier GmbH",
+    "branche": "Musterfertigung",
+    "website": "https://Muster.maier",
+    "bewertung": 68,
+    "status": "neu",
+    "id": "b7fb81dc-4284-4960-8f8f-333aeb83a985"
   }
 ]

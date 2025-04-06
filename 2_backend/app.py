@@ -51,4 +51,19 @@ def delete_lead(lead_id: str):
     save_leads(leads_db)
     return {"detail": "Lead gelöscht"}
 
+import os
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@app.get("/files/{lead_id}")
+def list_files(lead_id: str):
+    path = os.path.join(UPLOAD_DIR, f"lead_{lead_id}")
+    if not os.path.exists(path):
+        return []
+    files = os.listdir(path)
+    return [{"name": f, "url": f"/files/lead_{lead_id}/{f}"} for f in files]
+
+app.mount("/files", StaticFiles(directory=UPLOAD_DIR), name="files")

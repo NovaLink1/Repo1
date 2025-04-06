@@ -52,7 +52,17 @@ const AddLeadPopup = ({ onAdd, onClose }) => {
               <input type="text" placeholder="Branche" value={formData.branche} onChange={(e) => handleChange("branche", e.target.value)} className="border border-gray-300 rounded px-3 py-2 w-full" />
               <input type="text" placeholder="Website" value={formData.website} onChange={(e) => handleChange("website", e.target.value)} className="border border-gray-300 rounded px-3 py-2 w-full" />
               <input type="number" placeholder="Bewertung" value={formData.bewertung} onChange={(e) => handleChange("bewertung", e.target.value)} className="border border-gray-300 rounded px-3 py-2 w-full" />
-              <input type="text" placeholder="Status" value={formData.status} onChange={(e) => handleChange("status", e.target.value)} className="border border-gray-300 rounded px-3 py-2 w-full" />
+              <label className="block font-semibold mb-1">Status</label>
+              <select
+                value={formData.status}
+                onChange={(e) => handleChange("status", e.target.value)}
+                className="border border-gray-300 rounded px-3 py-2 w-full"
+              >
+                <option value="neu">Neu</option>
+                <option value="interessiert">Interessiert</option>
+                <option value="kontaktiert">Kontaktiert</option>
+                <option value="partnerschaft">Partnerschaft</option>
+              </select>
             </div>
 
             {/* Rechte Spalte: Ansprechpartner 1 & 2 */}

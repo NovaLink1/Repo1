@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
+function formatFileSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDate(isoString) {
+  const date = new Date(isoString);
+  return date.toLocaleDateString("de-DE");
+}
+
 const EditLeadPopup = ({ lead, onClose, onSave }) => {
   const [formData, setFormData] = useState(lead);
   const [activeTab, setActiveTab] = useState("details");
@@ -8,6 +19,12 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
   const [savedFiles, setSavedFiles] = useState([]);
   const [editingFileIndex, setEditingFileIndex] = useState(null);
 const [renameInput, setRenameInput] = useState("");
+const [lastDeletedFile, setLastDeletedFile] = useState(null);
+const [showUndoToast, setShowUndoToast] = useState(false);
+const [showTrash, setShowTrash] = useState(false);
+const [trashFiles, setTrashFiles] = useState([]);
+
+
 
 
   useEffect(() => {
@@ -246,6 +263,7 @@ const [renameInput, setRenameInput] = useState("");
       autoFocus
     />
   ) : (
+    <div className="flex flex-col flex-1">
     <a
       href={`http://localhost:8000${file.url}`}
       target="_blank"
@@ -254,6 +272,10 @@ const [renameInput, setRenameInput] = useState("");
     >
       {file.name}
     </a>
+      <div className="text-xs text-gray-500">
+        {formatFileSize(file.size)} · {formatDate(file.modified)}
+      </div>
+      </div>
   )}
 </div>
 
@@ -271,18 +293,22 @@ const [renameInput, setRenameInput] = useState("");
           ✏️
         </button>
         <button
-          onClick={async () => {
-            const confirmed = confirm(`❌ Möchtest du "${file.name}" wirklich löschen?`);
-            if (!confirmed) return;
-
-            await fetch(`http://localhost:8000/delete/${lead.id}/${encodeURIComponent(file.name)}`, {
-              method: "DELETE",
-            });
-
-            const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`)
-              .then((res) => res.json());
-            setSavedFiles(updatedFiles);
-          }}
+        onClick={async () => {
+          const confirmed = confirm(`❌ Möchtest du "${file.name}" wirklich löschen?`);
+          if (!confirmed) return;
+        
+          await fetch(`http://localhost:8000/delete/${lead.id}/${encodeURIComponent(file.name)}`, {
+            method: "DELETE",
+          });
+        
+          setLastDeletedFile(file);
+          setShowUndoToast(true);
+        
+          const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`)
+            .then((res) => res.json());
+          setSavedFiles(updatedFiles);
+        }}
+        
           className="text-xs text-gray-600 hover:text-red-600 font-bold"
           title="Datei löschen"
         >
@@ -298,9 +324,109 @@ const [renameInput, setRenameInput] = useState("");
           </div>
         )}
       </div>
-    </div>,
+    
+{showUndoToast && lastDeletedFile && (
+  <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded shadow-lg z-50 flex items-center space-x-4">
+    <span>📦 "{lastDeletedFile.name}" gelöscht</span>
+    <button
+      onClick={async () => {
+        await fetch(`http://localhost:8000/restore/${lead.id}/${encodeURIComponent(lastDeletedFile.name)}`, {
+          method: "PUT",
+        });
+
+        const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`)
+          .then((res) => res.json());
+        setSavedFiles(updatedFiles);
+        setShowUndoToast(false);
+        setLastDeletedFile(null);
+      }}
+      className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded"
+    >
+      Rückgängig
+    </button>
+  </div>
+)}
+
+
+{activeTab === "docs" && (
+  <>
+    <button
+      onClick={async () => {
+        if (!showTrash) {
+          const res = await fetch(`http://localhost:8000/trash/${lead.id}`);
+          const files = await res.json();
+          setTrashFiles(files);
+        }
+        setShowTrash(!showTrash);
+      }}
+      className="absolute bottom-4 right-6 bg-gray-800 text-white rounded-full p-3 shadow-lg hover:bg-red-600 transition"
+      title="Papierkorb anzeigen"
+    >
+      🗑️
+    </button>
+
+    {showTrash && (
+      <div className="mt-6 bg-white border border-gray-300 rounded-md shadow-md p-4">
+        <h3 className="text-sm font-semibold text-red-600 mb-2">Papierkorb</h3>
+        <ul className="space-y-2 text-sm text-gray-600">
+          {trashFiles.length === 0 ? (
+            <li>🧼 Der Papierkorb ist leer</li>
+          ) : (
+            trashFiles.map((name, index) => (
+              <li key={index} className="flex justify-between items-center">
+                <span className="break-all">{name}</span>
+                <button
+                  onClick={async () => {
+                    await fetch(`http://localhost:8000/restore/${lead.id}/${encodeURIComponent(name)}`, {
+                      method: "PUT",
+                    });
+
+                    const updatedTrash = await fetch(`http://localhost:8000/trash/${lead.id}`).then(r => r.json());
+                    const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`).then(r => r.json());
+
+                    setTrashFiles(updatedTrash);
+                    setSavedFiles(updatedFiles);
+                  }}
+                  className="text-xs bg-blue-600 text-white rounded px-2 py-1 hover:bg-blue-700"
+                >
+                  Wiederherstellen
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+    )}
+  </>
+)}
+
+
+
+
+
+
+      {activeTab === "docs" && (
+        <button
+          onClick={async () => {
+            if (!showTrash) {
+              const res = await fetch(`http://localhost:8000/trash/${lead.id}`);
+              const files = await res.json();
+              setTrashFiles(files);
+            }
+            setShowTrash(!showTrash);
+          }}
+          className="absolute bottom-4 right-6 bg-gray-800 text-white rounded-full p-3 shadow-lg hover:bg-red-600 transition z-20"
+          title="Papierkorb anzeigen"
+        >
+          🗑️
+        </button>
+      )}
+
+</div>,
     document.getElementById("popup-root")
   );
+
+
 };
 
 export default EditLeadPopup;

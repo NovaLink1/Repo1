@@ -16,7 +16,7 @@ const AddLeadPopup = ({ onAdd, onClose }) => {
     position2: "",
     telefon2: "",
     email2: "",
-    notizen: "",
+    notes: "",
   });
 
   const handleChange = (field, value) => {
@@ -86,7 +86,8 @@ const AddLeadPopup = ({ onAdd, onClose }) => {
 
           {/* Notizen-Feld */}
           <div>
-            <textarea placeholder="Notizen" value={formData.notizen} onChange={(e) => handleChange("notizen", e.target.value)} className="border border-gray-300 rounded px-3 py-2 w-full" rows={4} />
+            <textarea placeholder="Notizen" value={formData.notes}
+            onChange={(e) => handleChange("notes",e.target.value)} className="border border-gray-300 rounded px-3 py-2 w-full" rows={4} />
           </div>
 
           <div className="flex justify-end space-x-4 pt-4">

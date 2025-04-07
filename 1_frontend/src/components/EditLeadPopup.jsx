@@ -21,9 +21,6 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
   const [renameInput, setRenameInput] = useState("");
   const [lastDeletedFile, setLastDeletedFile] = useState(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
-  const [showTrash, setShowTrash] = useState(false);
-  const [trashFiles, setTrashFiles] = useState([]);
-  const [notes, setNotes] = useState(lead.notes || "");
 
   useEffect(() => {
     setFormData(lead);
@@ -31,17 +28,14 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
 
   useEffect(() => {
     if (activeTab === "docs" && lead?.id) {
-      fetch(`http://localhost:8000/files/${lead.id}`)
+      fetch(`http://localhost:8000/files/${encodeURIComponent(lead.id)}`)
         .then((res) => res.json())
         .then((data) => {
-          if (Array.isArray(data)) {
-            setSavedFiles(data);
-          } else {
-            setSavedFiles([]);
-            console.warn("Unerwartete Backend-Antwort:", data);
-          }
+          setSavedFiles(Array.isArray(data) ? data : []);
         })
-        .catch((err) => console.error("Fehler beim Laden gespeicherter Dateien:", err));
+        .catch((err) =>
+          console.error("Fehler beim Laden gespeicherter Dateien:", err)
+        );
     }
   }, [activeTab, lead]);
 
@@ -54,48 +48,90 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
     const updatedLead = {
       ...formData,
       bewertung: parseInt(formData.bewertung) || 0,
-      notizen: formData.notizen,  // Notizen hinzufügen
+      notizen: formData.notes, //️ HIER liegt das Problem
     };
-    onSave(updatedLead);  // Speichern und an Backend übergeben
+    onSave(updatedLead);  // ➜ wird an App.jsx übergeben
     onClose();
   };
   
-  
-  
 
   const uploadFileToServer = async (file) => {
-    if (!lead?.id) {
-      console.warn("Kein Lead-ID vorhanden – Datei wird nicht hochgeladen.");
-      return;
-    }
+    if (!lead?.id) return;
 
     const formData = new FormData();
     formData.append("file", file);
 
-    await fetch(`http://localhost:8000/upload/${lead.id}`, {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      await fetch(`http://localhost:8000/upload/${encodeURIComponent(lead.id)}`, {
+        method: "POST",
+        body: formData,
+      });
 
-    const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`)
-      .then((res) => res.json());
-    setSavedFiles(updatedFiles);
+      const updatedFiles = await fetch(`http://localhost:8000/files/${encodeURIComponent(lead.id)}`)
+        .then((res) => res.json());
+      setSavedFiles(updatedFiles);
+    } catch (error) {
+      console.error("Upload fehlgeschlagen:", error);
+    }
   };
 
   const handleFileDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    files.forEach(uploadFileToServer);
+    Array.from(e.dataTransfer.files).forEach(uploadFileToServer);
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setDragOver(true);
+  const handleRename = async (file, newName) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8000/rename/${encodeURIComponent(lead.id)}?old_name=${encodeURIComponent(file.name)}&new_name=${encodeURIComponent(newName)}`,
+        { method: "PUT" }
+      );
+      if (res.ok) {
+        const updatedFiles = await fetch(`http://localhost:8000/files/${encodeURIComponent(lead.id)}`).then((res) => res.json());
+        setSavedFiles(updatedFiles);
+        setEditingFileIndex(null);
+      } else {
+        alert("⚠️ Fehler beim Umbenennen");
+      }
+    } catch (error) {
+      console.error("Rename fehlgeschlagen:", error);
+    }
   };
 
-  const handleDragLeave = () => {
-    setDragOver(false);
+  const handleDelete = async (file) => {
+    const confirmed = confirm(`❌ Möchtest du "${file.name}" wirklich löschen?`);
+    if (!confirmed) return;
+
+    try {
+      await fetch(`http://localhost:8000/delete/${encodeURIComponent(lead.id)}/${encodeURIComponent(file.name)}`, {
+        method: "DELETE",
+      });
+      setLastDeletedFile(file);
+      setShowUndoToast(true);
+
+      const updatedFiles = await fetch(`http://localhost:8000/files/${encodeURIComponent(lead.id)}`).then((res) => res.json());
+      setSavedFiles(updatedFiles);
+    } catch (error) {
+      console.error("Löschen fehlgeschlagen:", error);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!lastDeletedFile) return;
+
+    try {
+      await fetch(`http://localhost:8000/restore/${encodeURIComponent(lead.id)}/${encodeURIComponent(lastDeletedFile.name)}`, {
+        method: "PUT",
+      });
+
+      const updatedFiles = await fetch(`http://localhost:8000/files/${encodeURIComponent(lead.id)}`).then((res) => res.json());
+      setSavedFiles(updatedFiles);
+      setShowUndoToast(false);
+      setLastDeletedFile(null);
+    } catch (error) {
+      console.error("Wiederherstellung fehlgeschlagen:", error);
+    }
   };
 
   if (!lead) return null;
@@ -245,8 +281,8 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Notizen</label>
               <textarea
                 placeholder="Notizen"
-                value={formData.notizen}
-                onChange={(e) => handleChange("notizen", e.target.value)}
+                value={formData.notes}
+                onChange={(e) => handleChange("notes", e.target.value)}
                 className="w-full border border-gray-300 rounded p-2 text-sm"
                 rows={4}
               />

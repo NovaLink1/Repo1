@@ -16,10 +16,10 @@ app = FastAPI()
 # --- CORS für Frontend auf Port 5173 ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173"],  # Frontend erlaubt
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Alle Methoden erlauben
+    allow_headers=["*"],  # Alle Header erlauben
 )
 
 # --- Lead Datenbank ---
@@ -40,11 +40,21 @@ def add_lead(lead_data: LeadCreate):
 def update_lead(lead_id: str, updated_data: LeadCreate):
     for index, lead in enumerate(leads_db):
         if lead.id == lead_id:
-            updated_lead = Lead(id=lead_id, **updated_data.dict())
-            leads_db[index] = updated_lead
-            save_leads(leads_db)
+            # Sicherstellen, dass das Notizenfeld ebenfalls gesetzt wird
+            updated_lead = Lead(
+                id=lead_id,
+                firma=updated_data.firma,
+                branche=updated_data.branche,
+                website=updated_data.website,
+                bewertung=updated_data.bewertung,
+                status=updated_data.status,
+                notes=updated_data.notes if updated_data.notes else "",  # Notizen korrekt setzen
+            )
+            leads_db[index] = updated_lead  # Lead in der Liste aktualisieren
+            save_leads(leads_db)  # Leads auf der Festplatte speichern
             return updated_lead
     raise HTTPException(status_code=404, detail="Lead nicht gefunden")
+
 
 @app.delete("/leads/{lead_id}", response_model=dict)
 def delete_lead(lead_id: str):

@@ -9,10 +9,12 @@ class LeadCreate(BaseModel):
     website: Optional[str] = None
     bewertung: Optional[int] = None
     status: str = "neu"
+    notes: Optional[str] = ""  # Notizen hinzugefügt
 
 # Lead – vollständiges Lead-Modell mit ID
 class Lead(LeadCreate):
     id: str
+    notes: Optional[str] = ""  # Sicherstellen, dass das `notes`-Feld hier enthalten ist
 
 # Dummy-Datenbank (Liste von Leads)
 leads_db: List[Lead] = [

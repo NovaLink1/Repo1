@@ -4,9 +4,12 @@ from crm_core import Lead
 
 FILE = "leads.json"
 
-def save_leads(leads: List[Lead]):
-    with open(FILE, "w", encoding="utf-8") as f:
-        json.dump([lead.dict() for lead in leads], f, ensure_ascii=False, indent=2)
+import json
+
+def save_leads(leads):
+    with open("leads.json", "w") as f:
+        json.dump([lead.dict() for lead in leads], f)  # Speichert die Notizen zusammen mit anderen Daten
+
 
 def load_leads() -> List[Lead]:
     try:

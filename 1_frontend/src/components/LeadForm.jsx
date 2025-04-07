@@ -18,21 +18,21 @@ const LeadForm = ({ onAdd, initialData, onUpdateLead, onClose }) => {
   }, [initialData]);
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const leadData = {
-      firma,
-      branche,
-      website,
-      bewertung: parseInt(bewertung),
-      status,
-    };
-
-    if (initialData) {
-      onUpdateLead(initialData.id, leadData);
-    } else {
-      onAdd(leadData);
-    }
+  e.preventDefault();
+  const leadData = {
+    firma,
+    branche,
+    website,
+    bewertung: parseInt(bewertung),
+    status,
+    notizen: formData.notizen,  // Sicherstellen, dass die Notizen übergeben werden
+  };
+  if (initialData) {
+    onUpdateLead(initialData.id, leadData);
+  } else {
+    onAddLead(leadData);
+  }
+};
 
     // Felder zurücksetzen bei neuer Erstellung
     setFirma("");
@@ -57,6 +57,5 @@ const LeadForm = ({ onAdd, initialData, onUpdateLead, onClose }) => {
       </button>
     </form>
   );
-};
 
 export default LeadForm;

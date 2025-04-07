@@ -67,3 +67,46 @@ def list_files(lead_id: str):
     return [{"name": f, "url": f"/files/lead_{lead_id}/{f}"} for f in files]
 
 app.mount("/files", StaticFiles(directory=UPLOAD_DIR), name="files")
+
+from fastapi import UploadFile, File
+
+@app.post("/upload/{lead_id}")
+async def upload_file(lead_id: str, file: UploadFile = File(...)):
+    dir_path = os.path.join(UPLOAD_DIR, f"lead_{lead_id}")
+    os.makedirs(dir_path, exist_ok=True)
+
+    file_path = os.path.join(dir_path, file.filename)
+    with open(file_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    return {"filename": file.filename}
+
+from fastapi import HTTPException
+
+@app.delete("/delete/{lead_id}/{filename}")
+def delete_file(lead_id: str, filename: str):
+    path = os.path.join(UPLOAD_DIR, f"lead_{lead_id}", filename)
+    if os.path.exists(path):
+        os.remove(path)
+        return {"detail": "Datei gelöscht"}
+    raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+
+from fastapi import HTTPException
+
+@app.put("/rename/{lead_id}")
+def rename_file(lead_id: str, old_name: str, new_name: str):
+    dir_path = os.path.join(UPLOAD_DIR, f"lead_{lead_id}")
+    old_path = os.path.join(dir_path, old_name)
+    new_path = os.path.join(dir_path, new_name)
+
+    if not os.path.exists(old_path):
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+
+    if os.path.exists(new_path):
+        raise HTTPException(status_code=400, detail="Neue Datei existiert bereits")
+
+    os.rename(old_path, new_path)
+    return {"detail": "Datei umbenannt"}
+
+

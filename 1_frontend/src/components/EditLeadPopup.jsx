@@ -6,6 +6,9 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
   const [activeTab, setActiveTab] = useState("details");
   const [dragOver, setDragOver] = useState(false);
   const [savedFiles, setSavedFiles] = useState([]);
+  const [editingFileIndex, setEditingFileIndex] = useState(null);
+const [renameInput, setRenameInput] = useState("");
+
 
   useEffect(() => {
     setFormData(lead);
@@ -55,10 +58,9 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
       body: formData,
     });
 
-    setSavedFiles((prev) => [
-      ...prev,
-      { name: file.name, url: `/files/lead_${lead.id}/${file.name}` },
-    ]);
+    const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`)
+    .then((res) => res.json());
+    setSavedFiles(updatedFiles);
   };
 
   const handleFileDrop = (e) => {
@@ -170,24 +172,128 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
             </div>
             <div className="h-64 overflow-y-scroll border border-gray-200 rounded p-4 bg-gray-50">
               <h4 className="text-md font-semibold mb-2">📁 Bereits gespeicherte Dateien</h4>
+              <ul className="list-disc ml-5 text-sm text-blue-700 space-y-1">
               {savedFiles.length === 0 ? (
-                <p className="text-sm text-gray-500">Keine gespeicherten Dateien gefunden.</p>
-              ) : (
-                <ul className="list-disc ml-5 text-sm text-blue-700 space-y-1">
-                  {savedFiles.map((file, index) => (
-                    <li key={index}>
-                      <a
-                        href={`http://localhost:8000${file.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                      >
-                        {file.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
+  <p className="text-sm text-gray-500">Keine gespeicherten Dateien gefunden.</p>
+) : (
+  savedFiles.map((file, index) => (
+    <li key={index} className="flex justify-between items-center">
+      {editingFileIndex === index ? (
+        <input
+          value={renameInput}
+          onChange={(e) => setRenameInput(e.target.value)}
+          onKeyDown={async (e) => {
+            if (e.key === "Enter") {
+              const res = await fetch(`http://localhost:8000/rename/${lead.id}?old_name=${encodeURIComponent(file.name)}&new_name=${encodeURIComponent(renameInput)}`, {
+                method: "PUT",
+              });
+
+              if (res.ok) {
+                const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`)
+                  .then((res) => res.json());
+                setSavedFiles(updatedFiles);
+                setEditingFileIndex(null);
+              } else {
+                alert("⚠️ Fehler beim Umbenennen");
+              }
+            }
+          }}
+          className="border border-gray-300 rounded px-2 py-1 text-sm w-full mr-2"
+          autoFocus
+        />
+      ) : (
+        
+<div className="flex items-center space-x-2 flex-1">
+  {file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+    <img
+      src={`http://localhost:8000${file.url}`}
+      alt={file.name}
+      className="w-16 h-16 object-cover border rounded shadow-sm"
+    />
+  ) : file.name.match(/\.pdf$/i) ? (
+    <embed
+      src={`http://localhost:8000${file.url}`}
+      type="application/pdf"
+      className="w-16 h-16 border rounded shadow-sm"
+    />
+  ) : (
+    <div className="w-16 h-16 flex items-center justify-center bg-gray-100 border rounded text-xs text-gray-500">
+      📎
+    </div>
+  )}
+
+  {editingFileIndex === index ? (
+    <input
+      value={renameInput}
+      onChange={(e) => setRenameInput(e.target.value)}
+      onKeyDown={async (e) => {
+        if (e.key === "Enter") {
+          const res = await fetch(`http://localhost:8000/rename/${lead.id}?old_name=${encodeURIComponent(file.name)}&new_name=${encodeURIComponent(renameInput)}`, {
+            method: "PUT",
+          });
+
+          if (res.ok) {
+            const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`)
+              .then((res) => res.json());
+            setSavedFiles(updatedFiles);
+            setEditingFileIndex(null);
+          } else {
+            alert("⚠️ Fehler beim Umbenennen");
+          }
+        }
+      }}
+      className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+      autoFocus
+    />
+  ) : (
+    <a
+      href={`http://localhost:8000${file.url}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:underline break-all"
+    >
+      {file.name}
+    </a>
+  )}
+</div>
+
+      )}
+
+      <div className="flex items-center ml-2 space-x-2">
+        <button
+          onClick={() => {
+            setEditingFileIndex(index);
+            setRenameInput(file.name);
+          }}
+          className="text-xs text-gray-500 hover:text-blue-600 font-bold"
+          title="Datei umbenennen"
+        >
+          ✏️
+        </button>
+        <button
+          onClick={async () => {
+            const confirmed = confirm(`❌ Möchtest du "${file.name}" wirklich löschen?`);
+            if (!confirmed) return;
+
+            await fetch(`http://localhost:8000/delete/${lead.id}/${encodeURIComponent(file.name)}`, {
+              method: "DELETE",
+            });
+
+            const updatedFiles = await fetch(`http://localhost:8000/files/${lead.id}`)
+              .then((res) => res.json());
+            setSavedFiles(updatedFiles);
+          }}
+          className="text-xs text-gray-600 hover:text-red-600 font-bold"
+          title="Datei löschen"
+        >
+          ✖
+        </button>
+      </div>
+    </li>
+  ))
+)}
+
+</ul>
             </div>
           </div>
         )}

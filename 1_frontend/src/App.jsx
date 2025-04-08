@@ -12,6 +12,8 @@ const App = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+
 
 
   useEffect(() => {
@@ -201,12 +203,13 @@ const App = () => {
           </div>
 
           {showEditForm && selectedLead && (
-            <EditLeadPopup
-              lead={selectedLead}
-              onClose={() => setShowEditForm(false)}
-              onSave={handleUpdateLead}
-            />
-          )};
+  <EditLeadPopup
+    lead={selectedLead}
+    onClose={() => setShowEditForm(false)}
+    onSave={handleUpdateLead}
+  />
+)}
+
 
           {selectedLead && !showEditForm && (
             <LeadDetailPopup lead={selectedLead} onClose={() => setSelectedLead(null)} />

@@ -80,7 +80,15 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
     setDragOver(false);
     Array.from(e.dataTransfer.files).forEach(uploadFileToServer);
   };
-
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+  
+  const handleDragLeave = () => {
+    setDragOver(false);
+  };
+  
   const handleRename = async (file, newName) => {
     try {
       const res = await fetch(

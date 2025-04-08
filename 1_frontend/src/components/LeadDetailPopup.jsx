@@ -17,7 +17,6 @@ const LeadDetailPopup = ({ lead, onClose, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(formData);
-    onClose();
   };
 
   return createPortal(
@@ -79,7 +78,7 @@ const LeadDetailPopup = ({ lead, onClose, onSave }) => {
           {/* Notizen-Feld */}
           <div>
             <label className="block font-semibold mb-1">Notizen</label>
-            <textarea value={formData.notizen || ""} onChange={(e) => handleChange("notizen", e.target.value)} className="border border-gray-300 rounded px-3 py-2 w-full" rows={4} />
+            <textarea value={formData.notizen || ""} onChange={(e) => handleChange("notes", e.target.value)} className="border border-gray-300 rounded px-3 py-2 w-full" rows={4} />
           </div>
 
           {/* Aktionen */}

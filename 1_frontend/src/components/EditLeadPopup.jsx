@@ -210,15 +210,16 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
                 />
                 <label className="block font-semibold mb-1">Status</label>
                 <select
-                  value={formData.status}
-                  onChange={(e) => handleChange("status", e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-2 w-full"
-                >
-                  <option value="neu">Neu</option>
-                  <option value="interessiert">Interessiert</option>
-                  <option value="kontaktiert">Kontaktiert</option>
-                  <option value="partnerschaft">Partnerschaft</option>
-                </select>
+  value={formData.status || ""}
+  onChange={(e) => handleChange("status", e.target.value)}
+  className="border border-gray-300 rounded px-3 py-2 w-full"
+>
+  <option value="neu">Neu</option>
+  <option value="interessiert">Interessiert</option>
+  <option value="kontaktiert">Kontaktiert</option>
+  <option value="partnerschaft">Partnerschaft</option>
+</select>
+
               </div>
               <div className="space-y-6">
                 <div className="space-y-3">

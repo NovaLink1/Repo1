@@ -9,7 +9,21 @@ class LeadCreate(BaseModel):
     website: Optional[str] = None
     bewertung: Optional[int] = None
     status: str = "neu"
-    notes: Optional[str] = ""  # Notizen hinzugefügt
+    notes: Optional[str] = ""
+
+    ansprechpartner1: Optional[str] = ""
+    position1: Optional[str] = ""
+    telefon1: Optional[str] = ""
+    email1: Optional[str] = ""
+
+    ansprechpartner2: Optional[str] = ""
+    position2: Optional[str] = ""
+    telefon2: Optional[str] = ""
+    email2: Optional[str] = ""
+
+class Lead(LeadCreate):
+    id: str
+
 
 # Lead – vollständiges Lead-Modell mit ID
 class Lead(LeadCreate):

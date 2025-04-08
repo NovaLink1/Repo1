@@ -6,9 +6,12 @@ from typing import List
 from uuid import uuid4
 from datetime import datetime
 import os
-
 from crm_core import Lead, LeadCreate
 from leads_storage import save_leads, load_leads
+from auth import authenticate_user, create_access_token, get_current_user
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Depends
+
 
 # --- FastAPI Setup ---
 app = FastAPI()
@@ -40,7 +43,6 @@ def add_lead(lead_data: LeadCreate):
 def update_lead(lead_id: str, updated_data: LeadCreate):
     for index, lead in enumerate(leads_db):
         if lead.id == lead_id:
-            # Sicherstellen, dass das Notizenfeld ebenfalls gesetzt wird
             updated_lead = Lead(
                 id=lead_id,
                 firma=updated_data.firma,
@@ -48,12 +50,23 @@ def update_lead(lead_id: str, updated_data: LeadCreate):
                 website=updated_data.website,
                 bewertung=updated_data.bewertung,
                 status=updated_data.status,
-                notes=updated_data.notes if updated_data.notes else "",  # Notizen korrekt setzen
+                notes=updated_data.notes,
+
+                ansprechpartner1=updated_data.ansprechpartner1,
+                position1=updated_data.position1,
+                telefon1=updated_data.telefon1,
+                email1=updated_data.email1,
+
+                ansprechpartner2=updated_data.ansprechpartner2,
+                position2=updated_data.position2,
+                telefon2=updated_data.telefon2,
+                email2=updated_data.email2,
             )
-            leads_db[index] = updated_lead  # Lead in der Liste aktualisieren
-            save_leads(leads_db)  # Leads auf der Festplatte speichern
+            leads_db[index] = updated_lead
+            save_leads(leads_db)
             return updated_lead
     raise HTTPException(status_code=404, detail="Lead nicht gefunden")
+
 
 
 @app.delete("/leads/{lead_id}", response_model=dict)
@@ -153,3 +166,17 @@ def restore_file(lead_id: str, filename: str):
 
     os.rename(trash_path, restore_path)
     return {"detail": "Datei wiederhergestellt"}
+
+@app.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token(data={"sub": user["email"]})
+    return {"access_token": token, "token_type": "bearer"}
+
+@app.get("/leads", response_model=List[Lead])
+def get_all_leads(current_user=Depends(get_current_user)):
+    return leads_db
+

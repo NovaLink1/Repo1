@@ -1,0 +1,10 @@
+{
+  "hosting": {
+    "site": "novalink-ca3c3",
+    "public": "dist",  
+    "rewrite": [{
+      "source": "**",
+      "destination": "/index.html"
+    }]
+  }
+}

@@ -25,6 +25,7 @@ app.add_middleware(
     allow_headers=["*"],  # Alle Header erlauben
 )
 
+
 # --- Lead Datenbank ---
 leads_db = load_leads()
 
@@ -38,6 +39,7 @@ def add_lead(lead_data: LeadCreate):
     leads_db.append(new_lead)
     save_leads(leads_db)
     return new_lead
+
 
 @app.put("/leads/{lead_id}", response_model=Lead)
 def update_lead(lead_id: str, updated_data: LeadCreate):

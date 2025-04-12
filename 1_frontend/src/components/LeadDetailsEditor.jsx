@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-const LeadDetailsEditor = ({ lead, onSave }) => {
+const LeadDetailsEditor = ({ lead, onSave, onClose, onDelete }) => {
+
   const [formData, setFormData] = useState(null);
 
   useEffect(() => {
@@ -17,8 +18,10 @@ const LeadDetailsEditor = ({ lead, onSave }) => {
     e.preventDefault();
     if (formData) {
       onSave(formData);
+      if (onClose) onClose(); // Fenster schließen, wenn Callback vorhanden
     }
   };
+  
 
   if (!formData) {
     return <p className="text-gray-500 italic">Kein Lead ausgewählt.</p>;
@@ -152,14 +155,40 @@ const LeadDetailsEditor = ({ lead, onSave }) => {
 
       
 
-      <div className="flex justify-end pt-2">
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-        >
-          Speichern
-        </button>
-      </div>
+      <div className="flex justify-between items-center pt-4">
+  {/* Linker Bereich: Lead löschen */}
+  <div>
+    {formData?.id && (
+      <button
+        type="button"
+        onClick={() => onDelete(formData)}
+        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+      >
+        ❌ Lead löschen
+      </button>
+    )}
+  </div>
+
+  {/* Rechter Bereich: Abbrechen + Speichern */}
+  <div className="flex gap-4">
+    <button
+      type="button"
+      onClick={onClose}
+      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
+    >
+      Abbrechen
+    </button>
+
+    <button
+      type="submit"
+      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+    >
+      Speichern
+    </button>
+  </div>
+</div>
+
+
     </form>
   );
 };

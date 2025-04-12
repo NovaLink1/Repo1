@@ -21,8 +21,7 @@ class LeadCreate(BaseModel):
     telefon2: Optional[str] = ""
     email2: Optional[str] = ""
 
-class Lead(LeadCreate):
-    id: str
+
 
 
 # Lead – vollständiges Lead-Modell mit ID

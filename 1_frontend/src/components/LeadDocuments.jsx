@@ -1,144 +1,152 @@
-import React, { useRef, useState } from "react";
+// LeadDocuments.jsx – kampfbereit gemacht ⚔️
 
-const LeadDocuments = ({ savedFiles, setSavedFiles }) => {
-  const fileInputRef = useRef(null);
-  const [trash, setTrash] = useState([]);
-  const [dragging, setDragging] = useState(false);
+import React, { useEffect, useState } from "react";
 
-  // Fehlerbehandlung: savedFiles muss ein Array sein
-  if (!Array.isArray(savedFiles)) {
-    return <p className="text-gray-500 italic">Keine Dateien vorhanden oder kein Lead ausgewählt.</p>;
-  }
+const LeadDocuments = ({ selectedLead }) => {
+  const [files, setFiles] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [renameMap, setRenameMap] = useState({});
+  const [trashedFiles, setTrashedFiles] = useState([]);
 
-  const handleFileDrop = (e) => {
+  const token = localStorage.getItem("leadnova_token");
+
+  
+
+  useEffect(() => {
+    if (!selectedLead) return;
+    fetch(`http://localhost:8000/files/${selectedLead.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then(setFiles)
+      .catch((err) => console.error("Fehler beim Laden der Dateien:", err));
+
+    fetch(`http://localhost:8000/trash/${selectedLead.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then(setTrashedFiles)
+      .catch((err) => console.error("Fehler beim Laden des Papierkorbs:", err));
+  }, [selectedLead]);
+
+  const handleFileChange = (e) => {
+    Array.from(e.target.files).forEach(uploadFileToServer);
+    e.target.value = ""; // Reset des Inputs
+  };
+  
+  const handleDrop = (e) => {
     e.preventDefault();
-    setDragging(false);
     const files = Array.from(e.dataTransfer.files);
-    const newFiles = files.map((file) => ({
-      name: file.name,
-      id: Date.now() + Math.random()
-    }));
-    setSavedFiles((prev) => [...prev, ...newFiles]);
+    files.forEach(uploadFileToServer);
   };
+  
 
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const newFiles = files.map((file) => ({
-      name: file.name,
-      id: Date.now() + Math.random()
-    }));
-    setSavedFiles((prev) => [...prev, ...newFiles]);
-  };
+  const handleUpload = async () => {
+    if (!selectedFile || !selectedLead) return;
 
-  const handleMoveToTrash = (fileId) => {
-    const file = savedFiles.find((f) => f.id === fileId);
-    if (file) {
-      setTrash((prev) => [...prev, file]);
-      setSavedFiles((prev) => prev.filter((f) => f.id !== fileId));
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      const res = await fetch(`http://localhost:8000/upload/${selectedLead.id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const result = await res.json();
+      console.log("✅ Upload erfolgreich:", result);
+      setUploadStatus("Erfolgreich hochgeladen");
+      setSelectedFile(null);
+      setFiles((prev) => [...prev, result.url]);
+    } catch (err) {
+      console.error("❌ Upload fehlgeschlagen:", err);
+      setUploadStatus("Fehler beim Hochladen");
     }
   };
 
-  const handleRestoreFromTrash = (fileId) => {
-    const file = trash.find((f) => f.id === fileId);
-    if (file) {
-      setSavedFiles((prev) => [...prev, file]);
-      setTrash((prev) => prev.filter((f) => f.id !== fileId));
-    }
+  const handleDelete = async (filename) => {
+    await fetch(`http://localhost:8000/delete/${selectedLead.id}/${filename}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setFiles(files.filter((f) => f !== filename));
   };
 
-  const handlePermanentDelete = (fileId) => {
-    setTrash((prev) => prev.filter((f) => f.id !== fileId));
+  const handleRename = async (filename) => {
+    const newName = renameMap[filename];
+    if (!newName) return;
+
+    await fetch(`http://localhost:8000/rename/${selectedLead.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ old_name: filename, new_name: newName }),
+    });
+    setRenameMap({ ...renameMap, [filename]: "" });
+    setFiles(files.map((f) => (f === filename ? newName : f)));
   };
 
-  const handleRenameFile = (fileId, newName) => {
-    setSavedFiles((prev) =>
-      prev.map((file) =>
-        file.id === fileId ? { ...file, name: newName } : file
-      )
-    );
+  const handleRestore = async (filename) => {
+    await fetch(`http://localhost:8000/restore/${selectedLead.id}/${filename}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setTrashedFiles(trashedFiles.filter((f) => f !== filename));
+    setFiles((prev) => [...prev, filename]);
   };
 
   return (
-    <div
-      className="relative w-full h-full border-dashed border-2 border-gray-300 rounded-lg p-4"
-      onDrop={handleFileDrop}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={() => setDragging(false)}
-    >
-      <div className="mb-4">
-        <button
-          onClick={() => fileInputRef.current.click()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-        >
-          📁 Datei hochladen
-        </button>
-        <input
-          type="file"
-          multiple
-          hidden
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-        />
-      </div>
+    <div>
+      <h3 className="font-bold mb-2">📎 Dokumente für: {selectedLead?.firma || "-"}</h3>
 
-      {/* Aktive Dateien */}
-      <div className="space-y-2">
-        {savedFiles.map((file) => (
-          <div
-            key={file.id}
-            className="flex items-center justify-between bg-gray-50 p-2 rounded border"
-          >
-            <input
-              type="text"
-              value={file.name}
-              onChange={(e) => handleRenameFile(file.id, e.target.value)}
-              className="w-2/3 border border-gray-300 rounded px-2 py-1"
-            />
-            <button
-              onClick={() => handleMoveToTrash(file.id)}
-              className="ml-2 px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-            >
-              In Papierkorb
-            </button>
-          </div>
-        ))}
-      </div>
+      <input type="file" onChange={handleFileChange} accept=".pdf" />
+      <button onClick={handleUpload} className="bg-blue-600 text-white p-2 rounded ml-2">
+        Hochladen
+      </button>
+      <p className="text-sm text-gray-600 mt-1">{uploadStatus}</p>
 
-      {/* Papierkorb */}
-      {trash.length > 0 && (
-        <div className="absolute bottom-4 right-4 w-64 bg-red-50 border border-red-300 rounded-lg p-3 shadow">
-          <h3 className="text-sm font-semibold text-red-700 mb-2">🗑️ Papierkorb</h3>
-          <ul className="space-y-1 text-sm text-red-800">
-            {trash.map((file) => (
-              <li key={file.id} className="flex justify-between items-center">
-                <span className="truncate">{file.name}</span>
-                <div className="space-x-2">
-                  <button
-                    onClick={() => handleRestoreFromTrash(file.id)}
-                    className="text-blue-600 hover:underline text-xs"
-                  >
-                    Wiederherstellen
-                  </button>
-                  <button
-                    onClick={() => handlePermanentDelete(file.id)}
-                    className="text-red-600 hover:underline text-xs"
-                  >
-                    Löschen
-                  </button>
-                </div>
+      <ul className="mt-4">
+      {files.map((file, index) => (
+  <li
+    key={file.name || index}
+    className="flex items-center justify-between border p-2 rounded mb-2"
+  >
+    <span>{file.name}</span>
+    <div className="flex gap-2">
+      <input
+        type="text"
+        placeholder="Neuer Name"
+        value={renameMap[file.name] || ""}
+        onChange={(e) =>
+          setRenameMap({ ...renameMap, [file.name]: e.target.value })
+        }
+        className="border p-1 rounded"
+      />
+      <button onClick={() => handleRename(file.name)} className="text-yellow-600">
+        Umbenennen
+      </button>
+      <button onClick={() => handleDelete(file.name)} className="text-red-600">
+        Löschen
+      </button>
+    </div>
+  </li>
+))}
+      </ul>
+
+      {trashedFiles.length > 0 && (
+        <div className="mt-6">
+          <h4 className="font-semibold">🗑️ Papierkorb</h4>
+          <ul>
+            {trashedFiles.map((f) => (
+              <li key={f} className="flex justify-between items-center border p-2 rounded mt-1">
+                <span>{f}</span>
+                <button onClick={() => handleRestore(f)} className="text-green-600">Wiederherstellen</button>
               </li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {/* Drag Overlay */}
-      {dragging && (
-        <div className="absolute inset-0 bg-blue-100 bg-opacity-40 flex items-center justify-center pointer-events-none rounded-lg">
-          <p className="text-blue-600 font-semibold text-lg">📂 Datei hier ablegen</p>
         </div>
       )}
     </div>

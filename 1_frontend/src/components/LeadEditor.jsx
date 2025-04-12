@@ -17,17 +17,39 @@ const LeadEditor = ({ lead, onSave }) => {
     });
   };
 
-  const handleSave = () => {
-    onSave(formData); // Speichern des Leads
+  const handleSave = async () => {
+    const token = localStorage.getItem("leadnova_token");
+    const url = formData.id
+      ? `http://localhost:8000/leads/${formData.id}`
+      : "http://localhost:8000/leads/";
+    const method = formData.id ? "PUT" : "POST";
+
+    console.log("🛰 Sende Lead an Server:", formData);
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      console.log("✅ Antwort vom Server:", data);
+      onSave(data); // Rückgabe an Parent-Komponente
+    } catch (error) {
+      console.error("❌ Fehler beim Speichern des Leads:", error);
+    }
   };
 
   return (
     <div>
-      {/* Beispiel für ein Formularfeld */}
       <input
         type="text"
         name="firma"
-        value={formData.firma}
+        value={formData.firma || ""}
         onChange={handleChange}
         placeholder="Firma"
       />

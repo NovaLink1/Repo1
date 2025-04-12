@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const LeadForm = ({ onAddLead, onUpdateLead, initialData, onClose }) => {
+const LeadForm = ({ onAddLead, onUpdateLead, initialData }) => {
   const [firma, setFirma] = useState("");
   const [branche, setBranche] = useState("");
   const [website, setWebsite] = useState("");
@@ -8,7 +8,7 @@ const LeadForm = ({ onAddLead, onUpdateLead, initialData, onClose }) => {
   const [bewertung, setBewertung] = useState("");
   const [notizen, setNotizen] = useState("");
 
-  // Vorbefüllen bei Bearbeitung
+  // Wenn initialData existiert, übernehmen wir die vorhandenen Werte
   useEffect(() => {
     if (initialData) {
       setFirma(initialData.firma);
@@ -20,6 +20,7 @@ const LeadForm = ({ onAddLead, onUpdateLead, initialData, onClose }) => {
     }
   }, [initialData]);
 
+  // Formular-Daten beim Absenden verarbeiten
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -33,20 +34,20 @@ const LeadForm = ({ onAddLead, onUpdateLead, initialData, onClose }) => {
     };
 
     if (initialData) {
+      // Lead aktualisieren, wenn initialData existiert
       onUpdateLead(initialData.id, leadData);
     } else {
+      // Neues Lead anlegen, wenn kein initialData vorhanden ist
       onAddLead(leadData);
     }
 
-    // Felder zurücksetzen
+    // Felder nach dem Absenden zurücksetzen
     setFirma("");
     setBranche("");
     setWebsite("");
     setStatus("neu");
     setBewertung("");
     setNotizen("");
-
-    if (onClose) onClose();
   };
 
   return (
@@ -56,12 +57,49 @@ const LeadForm = ({ onAddLead, onUpdateLead, initialData, onClose }) => {
       </h2>
 
       <div className="space-y-2">
-        <input className="w-full border rounded px-3 py-2" value={firma} onChange={(e) => setFirma(e.target.value)} placeholder="Firma" required />
-        <input className="w-full border rounded px-3 py-2" value={branche} onChange={(e) => setBranche(e.target.value)} placeholder="Branche" required />
-        <input className="w-full border rounded px-3 py-2" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website" required />
-        <input className="w-full border rounded px-3 py-2" value={status} onChange={(e) => setStatus(e.target.value)} placeholder="Status" required />
-        <input className="w-full border rounded px-3 py-2" value={bewertung} onChange={(e) => setBewertung(e.target.value)} type="number" placeholder="Bewertung" required />
-        <textarea className="w-full border rounded px-3 py-2" value={notizen} onChange={(e) => setNotizen(e.target.value)} placeholder="Notizen" rows={4} />
+        <input
+          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={firma}
+          onChange={(e) => setFirma(e.target.value)}
+          placeholder="Firma"
+          required
+        />
+        <input
+          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={branche}
+          onChange={(e) => setBranche(e.target.value)}
+          placeholder="Branche"
+          required
+        />
+        <input
+          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+          placeholder="Website"
+          required
+        />
+        <input
+          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          placeholder="Status"
+          required
+        />
+        <input
+          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={bewertung}
+          onChange={(e) => setBewertung(e.target.value)}
+          type="number"
+          placeholder="Bewertung"
+          required
+        />
+        <textarea
+          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={notizen}
+          onChange={(e) => setNotizen(e.target.value)}
+          placeholder="Notizen"
+          rows={4}
+        />
       </div>
 
       <button

@@ -13,42 +13,77 @@ const AppShell = ({
   leads = [],
   selectedLead,
   setSelectedLead,
-  onUpdateLead,
   savedFiles,
   setSavedFiles
 }) => {
+
   const statusLevel = {
     neu: 1,
     interessiert: 2,
     kontaktiert: 3,
     partnerschaft: 4
   };
-
+  
   const [leadList, setLeadList] = useState(leads);
   const [noteInput, setNoteInput] = useState("");
-
+  
   useEffect(() => {
     setLeadList(leads);
   }, [leads]);
 
   useEffect(() => {
+    setLeadList(leads);
+  }, [leads]);
+  
+  useEffect(() => {
     setNoteInput(selectedLead?.notizen || "");
   }, [selectedLead]);
-
+  
+  const onUpdateLead = async (updatedLead) => {
+    try {
+      const res = await fetch(`http://localhost:8000/leads/${updatedLead.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedLead),
+      });
+  
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg);
+      }
+  
+      const savedLead = await res.json();
+  
+      setLeadList((prev) =>
+        prev.map((lead) =>
+          lead.id === savedLead.id ? savedLead : lead
+        )
+      );
+      setSelectedLead(savedLead);
+    } catch (error) {
+      console.error("❌ Fehler beim Speichern des Leads:", error);
+      alert("Fehler beim Speichern:\n" + error.message);
+    }
+  };
+  
+  
   const filteredLeads = leadList.filter((lead) =>
     [lead.firma, lead.branche, lead.status]
       .join(" ")
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
-
-  const handleNewLead = () => {
-    const newLead = {
-      id: Math.random().toString(36).substr(2, 9),
+  
+  
+  const handleNewLead = async () => {
+    const emptyLead = {
       firma: "",
       branche: "",
       status: "neu",
       bewertung: 0,
+      notizen: "",
       ansprechpartner1: "",
       position1: "",
       email1: "",
@@ -56,13 +91,57 @@ const AppShell = ({
       ansprechpartner2: "",
       position2: "",
       email2: "",
-      telefon2: "",
-      notizen: ""
+      telefon2: ""
     };
-    setLeadList([...leadList, newLead]);
-    setSelectedLead(newLead);
+  
+    try {
+      const res = await fetch("http://localhost:8000/leads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(emptyLead)
+      });
+  
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Lead konnte nicht erstellt werden: ${errorText}`);
+      }
+  
+      const createdLead = await res.json();
+      setLeadList((prev) => [...prev, createdLead]);
+      setSelectedLead(createdLead);
+    } catch (error) {
+      console.error("❌ Fehler beim Erstellen eines neuen Leads:", error);
+      alert("Fehler beim Erstellen des Leads:\n" + error.message);
+    }
   };
-
+  
+  
+  const handleDeleteLead = async (lead) => {
+    const confirmed = confirm(`❌ Bist du sicher, dass du "${lead.firma}" löschen möchtest?`);
+    if (!confirmed) return;
+  
+    try {
+      const res = await fetch(`http://localhost:8000/leads/${lead.id}`, {
+        method: "DELETE",
+      });
+  
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg);
+      }
+  
+      setLeadList((prev) => prev.filter((l) => l.id !== lead.id));
+      setSelectedLead(null);
+    } catch (error) {
+      console.error("❌ Fehler beim Löschen des Leads:", error);
+      alert("Fehler beim Löschen:\n" + error.message);
+    }
+  };
+  
+  
+  
   const uploadFileToServer = async (file) => {
     if (!selectedLead?.id) return;
   
@@ -103,14 +182,31 @@ const AppShell = ({
     <div className="flex flex-col h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-blue-600 text-white p-4 shadow-md">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <h1 className="text-2xl font-semibold">LeadNova</h1>
-          <nav className="space-x-4">
-            <a href="/" className="hover:text-blue-300">Home</a>
-            <a href="/leads" className="hover:text-blue-300">Leads</a>
-            <a href="/settings" className="hover:text-blue-300">Settings</a>
-          </nav>
-        </div>
+      <div className="flex justify-between items-center max-w-7xl mx-auto">
+  {/* App-Name */}
+  <h1 className="text-2xl font-semibold">LeadNova</h1>
+
+  {/* Navigation + Benutzerbereich */}
+  <div className="flex items-center gap-6">
+    <nav className="space-x-4">
+      <a href="/" className="hover:text-blue-300">Home</a>
+      <a href="/leads" className="hover:text-blue-300">Leads</a>
+      <a href="/settings" className="hover:text-blue-300">Settings</a>
+    </nav>
+
+    {/* Nutzerinfo + Logout */}
+    <div className="flex items-center gap-3">
+      <span className="text-sm italic">{userEmail}</span>
+      <button
+        onClick={onLogout}
+        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+</div>
+
       </header>
 
       <div className="grid grid-cols-5 grid-rows-3 gap-4 p-4 flex-1">
@@ -132,106 +228,20 @@ const AppShell = ({
         <div className="col-span-2 bg-white shadow rounded-xl p-4 overflow-y-auto">
           <h2 className="text-xl font-semibold mb-4">🏷️ Lead-Details & ✏️ Bearbeiten</h2>
           <LeadDetailsEditor
-            lead={selectedLead}
-            onSave={(updatedLead) => {
-              onUpdateLead(updatedLead);
-              setSelectedLead(updatedLead);
-            }}
-          />
+  lead={selectedLead}
+  onSave={onUpdateLead}
+  onClose={() => setSelectedLead(null)}
+  onDelete={handleDeleteLead}
+/>
         </div>
-
-        {/* Q2: Dokumente */}
-        <div className="col-span-2 bg-white shadow rounded-xl p-4 overflow-y-auto">
+                {/* Q2: Dokumente */}
+                <div className="col-span-2 bg-white shadow rounded-xl p-4 overflow-y-auto">
           <h2 className="text-xl font-semibold mb-4">📎 Dokumente</h2>
-          {selectedLead ? (
-            <div className="space-y-4">
-              <div
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const files = Array.from(e.dataTransfer.files);
-                  files.forEach((file) => uploadFileToServer(file));
-                }}
-                onDragOver={(e) => e.preventDefault()}
-                className="border-dashed border-2 border-gray-300 p-6 text-center rounded-lg bg-gray-50 hover:border-blue-500"
-              >
-                <p className="text-gray-500">📂 Datei(en) hierher ziehen oder klicken zum Hochladen</p>
-                <input
-                  type="file"
-                  multiple
-                  onChange={(e) => {
-                    Array.from(e.target.files).forEach(uploadFileToServer);
-                    e.target.value = "";
-                  }}
-                  className="hidden"
-                  id="fileInput"
-                />
-                <label htmlFor="fileInput" className="cursor-pointer inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                  Dateien auswählen
-                </label>
-              </div>
-
-              <div className="border rounded p-4 bg-gray-100">
-                <h3 className="font-semibold mb-2">📁 Bereits gespeicherte Dateien</h3>
-                <ul className="text-sm space-y-1 text-blue-700">
-                  {Array.isArray(savedFiles) && savedFiles.length === 0 ? (
-                    <p className="text-gray-500 italic">Keine gespeicherten Dateien.</p>
-                  ) : (
-                    savedFiles.map((file, idx) => (
-                      <li key={idx}>
-                        <a
-                          href={`http://localhost:8000${file.url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:underline break-all"
-                        >
-                          {file.name}
-                        </a>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500 italic">Kein Lead ausgewählt.</p>
-          )}
-        </div>
-
-        {/* Q3: Notizen */}
-        <div className="col-span-2 bg-white shadow rounded-xl p-4">
-          <h2 className="text-xl font-semibold mb-4">📝 Notizen / Historie</h2>
-          {selectedLead ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const updatedLead = {
-                  ...selectedLead,
-                  notizen: noteInput,
-                };
-                onUpdateLead(updatedLead);
-                setSelectedLead(updatedLead);
-              }}
-              className="space-y-4"
-            >
-              <textarea
-                value={noteInput}
-                onChange={(e) => setNoteInput(e.target.value)}
-                placeholder="Hier kannst du deine Notizen eingeben..."
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                rows={6}
-              />
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                >
-                  💾 Notizen speichern
-                </button>
-              </div>
-            </form>
-          ) : (
-            <p className="text-gray-500 italic">Kein Lead ausgewählt.</p>
-          )}
+          <LeadDocuments
+            selectedLead={selectedLead}
+            savedFiles={savedFiles}
+            setSavedFiles={setSavedFiles}
+          />
         </div>
       </div>
     </div>
@@ -239,3 +249,4 @@ const AppShell = ({
 };
 
 export default AppShell;
+

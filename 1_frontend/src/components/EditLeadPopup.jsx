@@ -48,7 +48,7 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
     const updatedLead = {
       ...formData,
       bewertung: parseInt(formData.bewertung) || 0,
-      notizen: formData.notes, //️ HIER liegt das Problem
+      notizen: formData.notizen, //️ HIER liegt das Problem
     };
     onSave(updatedLead);  // ➜ wird an App.jsx übergeben
     onClose();
@@ -290,7 +290,7 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Notizen</label>
               <textarea
                 placeholder="Notizen"
-                value={formData.notes}
+                value={formData.notizen}
                 onChange={(e) => handleChange("notes", e.target.value)}
                 className="w-full border border-gray-300 rounded p-2 text-sm"
                 rows={4}

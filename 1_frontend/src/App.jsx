@@ -13,20 +13,42 @@ const App = () => {
   const [leadFiles, setLeadFiles] = useState({}); // Dateien für Leads speichern
   const [error, setError] = useState(""); // Fehlerzustand für Login
 
+
+  const fetchWithAuth = async (url, options = {}) => {
+    const token = localStorage.getItem("leadnova_token");
+  
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  };
+  
   useEffect(() => {
     const token = localStorage.getItem("leadnova_token");
     setIsLoggedIn(!!token);
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn && user) {
-      fetchWithAuth("http://localhost:8000/leads/")
-        .then((res) => res.json())
-        .then((data) => setLeads(data))
-        .catch((err) => console.error("Fehler beim Laden der Leads:", err));
-    }
-  }, [isLoggedIn, user]);
-
+    console.log("🧪 Versuche Leads zu laden...");
+  
+    fetchWithAuth("http://localhost:8000/leads/")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("📥 Leads vom Server:", data);
+        setLeads(data);
+      })
+      .catch((err) => console.error("❌ Fehler beim Laden der Leads:", err));
+  }, []);
+  
+  useEffect(() => {
+    fetch("/api/userinfo")
+      .then(res => res.json())
+      .then(data => setUser(data));
+  }, []);
+  
   const handleUpdateLead = async (updatedLead) => {
     try {
       const res = await fetch(`http://localhost:8000/leads/${updatedLead.id}`, {
@@ -63,7 +85,10 @@ const App = () => {
     console.log("✅ Login success:", user);
     localStorage.setItem("leadnova_token", user.accessToken);
     setIsLoggedIn(true);
-    setUser(user);
+    const userInfo = { email: user.email };
+    localStorage.setItem("user", JSON.stringify(userInfo));
+    setUser(userInfo);
+    
   };
   
   

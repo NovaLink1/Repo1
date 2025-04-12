@@ -182,36 +182,35 @@ const AppShell = ({
     <div className="flex flex-col h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-blue-600 text-white p-4 shadow-md">
-      <div className="flex justify-between items-center max-w-7xl mx-auto">
-  {/* App-Name */}
-  <h1 className="text-2xl font-semibold">LeadNova</h1>
-
-  {/* Navigation + Benutzerbereich */}
-  <div className="flex items-center gap-6">
-    <nav className="space-x-4">
-      <a href="/" className="hover:text-blue-300">Home</a>
-      <a href="/leads" className="hover:text-blue-300">Leads</a>
-      <a href="/settings" className="hover:text-blue-300">Settings</a>
-    </nav>
-
-    {/* Nutzerinfo + Logout */}
-    <div className="flex items-center gap-3">
-      <span className="text-sm italic">{userEmail}</span>
-      <button
-        onClick={onLogout}
-        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-      >
-        Logout
-      </button>
-    </div>
-  </div>
-</div>
-
+        <div className="flex justify-between items-center max-w-7xl mx-auto">
+          {/* App-Name */}
+          <h1 className="text-2xl font-semibold">LeadNova</h1>
+  
+          {/* Navigation + Benutzerbereich */}
+          <div className="flex items-center gap-6">
+            <nav className="space-x-4">
+              <a href="/" className="hover:text-blue-300">Home</a>
+              <a href="/leads" className="hover:text-blue-300">Leads</a>
+              <a href="/settings" className="hover:text-blue-300">Settings</a>
+            </nav>
+  
+            <div className="flex items-center gap-3">
+              <span className="text-sm italic">{userEmail}</span>
+              <button
+                onClick={onLogout}
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
       </header>
-
-      <div className="grid grid-cols-5 grid-rows-3 gap-4 p-4 flex-1">
-        {/* Sidebar */}
-        <div className="col-span-1 row-span-3">
+  
+      {/* Main Layout: Sidebar + Q1 + Q2 */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar (fixe Breite) */}
+        <div className="w-64 border-r overflow-y-auto">
           <Sidebar
             userEmail={userEmail}
             searchTerm={searchTerm}
@@ -223,30 +222,33 @@ const AppShell = ({
             onNewLead={handleNewLead}
           />
         </div>
-
-        {/* Q1: Lead-Details & Bearbeiten */}
-        <div className="col-span-2 bg-white shadow rounded-xl p-4 overflow-y-auto">
-          <h2 className="text-xl font-semibold mb-4">🏷️ Lead-Details & ✏️ Bearbeiten</h2>
-          <LeadDetailsEditor
-  lead={selectedLead}
-  onSave={onUpdateLead}
-  onClose={() => setSelectedLead(null)}
-  onDelete={handleDeleteLead}
-/>
-        </div>
-                {/* Q2: Dokumente */}
-                <div className="col-span-2 bg-white shadow rounded-xl p-4 overflow-y-auto">
-          <h2 className="text-xl font-semibold mb-4">📎 Dokumente</h2>
-          <LeadDocuments
-            selectedLead={selectedLead}
-            savedFiles={savedFiles}
-            setSavedFiles={setSavedFiles}
-          />
+  
+        {/* Rechte Seite: Q1 + Q2 */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Q1: Lead-Details */}
+          <div className="w-2/3 p-4 overflow-y-auto bg-white shadow-inner">
+            <h2 className="text-xl font-semibold mb-4">🏷️ Lead-Details & ✏️ Bearbeiten</h2>
+            <LeadDetailsEditor
+              lead={selectedLead}
+              onSave={onUpdateLead}
+              onClose={() => setSelectedLead(null)}
+              onDelete={handleDeleteLead}
+            />
+          </div>
+  
+          {/* Q2: Dokumente */}
+          <div className="w-1/3 p-4 overflow-y-auto bg-white shadow-inner border-l">
+            <h2 className="text-xl font-semibold mb-4">📎 Dokumente</h2>
+            <LeadDocuments
+              selectedLead={selectedLead}
+              savedFiles={savedFiles}
+              setSavedFiles={setSavedFiles}
+            />
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
-export default AppShell;
-
+  export default AppShell;
+  

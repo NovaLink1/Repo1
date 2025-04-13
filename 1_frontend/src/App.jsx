@@ -10,8 +10,11 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [leadFiles, setLeadFiles] = useState({});
   const [error, setError] = useState("");
+  
+
 
   const fetchWithAuth = async (url, options = {}) => {
     const token = localStorage.getItem("leadnova_token");
@@ -98,9 +101,30 @@ const App = () => {
     setUser(userInfo);
   };
 
-  return !isLoggedIn ? (
-    <LoginForm onLoginSuccess={handleLoginSuccess} setError={setError} />
+  return !user ? (
+    !isRegistering ? (
+      <>
+        <LoginForm onLoginSuccess={handleLoginSuccess} />
+        <p className="text-sm text-center mt-2">
+          Noch keinen Account?{" "}
+          <button onClick={() => setIsRegistering(true)} className="text-blue-600 underline">
+            Jetzt registrieren
+          </button>
+        </p>
+      </>
+    ) : (
+      <>
+        <RegisterForm onRegisterSuccess={handleLoginSuccess} />
+        <p className="text-sm text-center mt-2">
+          Bereits registriert?{" "}
+          <button onClick={() => setIsRegistering(false)} className="text-blue-600 underline">
+            Zum Login
+          </button>
+        </p>
+      </>
+    )
   ) : (
+    
     <AppShell
       userEmail={user ? user.email : "Unbekannt"}
       searchTerm={searchTerm}

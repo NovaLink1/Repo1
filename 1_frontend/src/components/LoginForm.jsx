@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'; // Importiere Firebase Auth
 import { auth } from '../firebase/firebase-config'; // Firebase-Config importieren
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const LoginForm = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');         // State für E-Mail
@@ -22,24 +23,25 @@ const LoginForm = ({ onLoginSuccess }) => {
     setLoading(true); // Ladezustand aktivieren
 
     try {
-      // Anmeldung bei Firebase mit E-Mail und Passwort
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
+    
+      if (!user.emailVerified) {
+        setError("❌ Bitte bestätige deine E-Mail-Adresse, bevor du dich einloggen kannst.");
+        return;
+      }
+    
       localStorage.setItem("leadnova_uid", user.uid);
-      console.log("🔐 Angemeldeter Nutzer:", user.uid);
-
-      // Falls die Anmeldung erfolgreich ist, die Login-Erfolgs-Funktion aufrufen
-      onLoginSuccess(user);
-      setEmail(''); // Zurücksetzen des E-Mail-Feldes
-      setPassword(''); // Zurücksetzen des Passwort-Feldes
+      const token = await user.getIdToken();
+      localStorage.setItem("leadnova_token", token);
+    
+      console.log("✅ Login erfolgreich:", user.uid);
+      onLoginSuccess(user); // übergebe Nutzer an App
     } catch (err) {
-      // Fehlerbehandlung
-      setError("Fehler bei der Anmeldung. Überprüfe deine E-Mail und Passwort.");
-      console.error("Anmeldefehler:", err.message); // Detailierter Fehler in der Konsole
-    } finally {
-      setLoading(false); // Ladezustand zurücksetzen
+      setError("❌ Login fehlgeschlagen: " + err.message);
+      console.error("❌ Fehler beim Login:", err);
     }
+    
   };
 
   return (

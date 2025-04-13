@@ -1,6 +1,6 @@
 // AppShell.jsx – mit Q1–Q3 vollständig integriert
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "./Sidebar";
 import LeadDocuments from "./LeadDocuments";
 import LeadDetailsEditor from "./LeadDetailsEditor";
@@ -68,6 +68,28 @@ const AppShell = ({
     }
   };
   
+  const [dividerPos, setDividerPos] = useState(600);
+const containerRef = useRef();
+
+const startDrag = (e) => {
+  e.preventDefault();
+  const startX = e.clientX;
+  const startWidth = dividerPos;
+
+  const onMouseMove = (e) => {
+    const delta = e.clientX - startX;
+    const newWidth = Math.max(300, Math.min(startWidth + delta, containerRef.current.offsetWidth - 300));
+    setDividerPos(newWidth);
+  };
+
+  const onMouseUp = () => {
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  };
+
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+};
   
   const filteredLeads = leadList.filter((lead) =>
     [lead.firma, lead.branche, lead.status]
@@ -224,28 +246,37 @@ const AppShell = ({
         </div>
   
         {/* Rechte Seite: Q1 + Q2 */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Q1: Lead-Details */}
-          <div className="w-2/3 p-4 overflow-y-auto bg-white shadow-inner">
-            <h2 className="text-xl font-semibold mb-4">🏷️ Lead-Details & ✏️ Bearbeiten</h2>
-            <LeadDetailsEditor
-              lead={selectedLead}
-              onSave={onUpdateLead}
-              onClose={() => setSelectedLead(null)}
-              onDelete={handleDeleteLead}
-            />
-          </div>
-  
-          {/* Q2: Dokumente */}
-          <div className="w-1/3 p-4 overflow-y-auto bg-white shadow-inner border-l">
-            <h2 className="text-xl font-semibold mb-4">📎 Dokumente</h2>
-            <LeadDocuments
-              selectedLead={selectedLead}
-              savedFiles={savedFiles}
-              setSavedFiles={setSavedFiles}
-            />
-          </div>
-        </div>
+        
+        {/* Rechte Seite: Q1 + Q2 */}
+<div ref={containerRef} className="flex flex-1 overflow-hidden relative">
+  {/* Q1: Lead-Details */}
+  <div style={{ width: dividerPos }} className="p-4 overflow-y-auto bg-white shadow-inner">
+    <h2 className="text-xl font-semibold mb-4">🏷️ Lead-Details & ✏️ Bearbeiten</h2>
+    <LeadDetailsEditor
+      lead={selectedLead}
+      onSave={onUpdateLead}
+      onClose={() => setSelectedLead(null)}
+      onDelete={handleDeleteLead}
+    />
+  </div>
+
+  {/* Drag-Leiste */}
+  <div
+    onMouseDown={startDrag}
+    className="w-2 cursor-col-resize bg-gray-300 hover:bg-gray-400 transition"
+  />
+
+  {/* Q2: Dokumente */}
+  <div className="flex-1 p-4 overflow-y-auto bg-white shadow-inner border-l">
+    <h2 className="text-xl font-semibold mb-4">📎 Dokumente</h2>
+    <LeadDocuments
+      selectedLead={selectedLead}
+      savedFiles={savedFiles}
+      setSavedFiles={setSavedFiles}
+    />
+  </div>
+</div>
+
       </div>
     </div>
   );

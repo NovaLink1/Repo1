@@ -3,6 +3,14 @@
 import React, { useEffect, useState } from "react";
 
 const LeadDocuments = ({ selectedLead }) => {
+  if (!selectedLead) {
+    return (
+      <div className="text-gray-500 italic p-4">
+        ⚠️ Kein Lead ausgewählt. Bitte wähle einen Eintrag in der Liste.
+      </div>
+    );
+  }
+  
   const [files, setFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState("");
   const [renameMap, setRenameMap] = useState({});
@@ -11,6 +19,10 @@ const LeadDocuments = ({ selectedLead }) => {
   const [showTrash, setShowTrash] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+
 
   const token = localStorage.getItem("leadnova_token");
 
@@ -25,18 +37,33 @@ const LeadDocuments = ({ selectedLead }) => {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
+      
+      // ✅ NEU: Prüfung einfügen
+      if (!activeRes.ok || !trashRes.ok) {
+        setErrorMsg("❌ Dateien konnten nicht geladen werden. Bitte prüfen Sie Ihre Verbindung oder Anmeldung.");
+        throw new Error("Fetch nicht ok");
+      }
+      
+      
       const active = await activeRes.json();
       const trash = await trashRes.json();
       setFiles(active);
       setTrashedFiles(trash);
+      
     } catch (err) {
       console.error("❌ Fehler beim Neuladen der Dateien:", err);
+      setErrorMsg("❌ Server nicht erreichbar oder Antwort ungültig.");
     }
+    
   };
 
   useEffect(() => {
-    reloadFiles();
+    if (selectedLead?.id) {
+      reloadFiles();
+    }
   }, [selectedLead]);
+
+
 
   const uploadFileToServer = async (file) => {
     const formData = new FormData();
@@ -49,8 +76,10 @@ const LeadDocuments = ({ selectedLead }) => {
       });
       await reloadFiles();
     } catch (err) {
-      console.error("❌ Upload fehlgeschlagen:", err);
+      console.error("❌ Fehler beim Neuladen der Dateien:", err);
+      setErrorMsg("❌ Server nicht erreichbar oder Antwort ungültig.");
     }
+    
   };
 
   const handleDrop = (e) => {
@@ -144,7 +173,10 @@ setEditingFile(null);
         className="w-full border border-gray-300 rounded px-3 py-2 mb-4 text-sm"
       />
 
-      <ul className="mt-4">
+{loading ? (
+  <p className="text-sm text-gray-600 italic">⏳ Lade Dokumente...</p>
+) : (
+  <ul className="mt-4">
         {filteredFiles.map((file, index) => (
           <li
             key={file.name || index}
@@ -193,6 +225,8 @@ setEditingFile(null);
           </li>
         ))}
       </ul>
+      
+)}
 
       <button
         onClick={() => setShowTrash(!showTrash)}

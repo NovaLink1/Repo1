@@ -25,26 +25,28 @@ const App = () => {
     });
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem("leadnova_token");
-    setIsLoggedIn(!!token);
-  }, []);
 
   useEffect(() => {
-    console.log("🚀 useEffect geladen → Lade Leads...");
-
-    fetch("http://localhost:8000/leads")
+    const userId = localStorage.getItem("leadnova_uid");
+    if (!userId) {
+      console.error("⚠️ Keine user_id gefunden – Nutzer ist vermutlich nicht eingeloggt.");
+      return;
+    }
+  
+    console.log("🚀 Lade Leads für user_id:", userId);
+  
+    fetch(`http://localhost:8000/leads?user_id=${encodeURIComponent(userId)}`)
       .then(async (res) => {
         const contentType = res.headers.get("Content-Type");
         const rawText = await res.text();
-
+  
         console.log("📦 Content-Type:", contentType);
         console.log("🧾 Response-Body:", rawText.slice(0, 300));
-
+  
         if (!res.ok) {
           throw new Error(`❌ Fehlerstatus ${res.status}`);
         }
-
+  
         if (contentType && contentType.includes("application/json")) {
           const data = JSON.parse(rawText);
           console.log("✅ JSON geladen:", data);
@@ -55,6 +57,7 @@ const App = () => {
       })
       .catch((err) => console.error("💥 Fehler beim Laden der Leads:", err));
   }, []);
+  
 
   const handleUpdateLead = async (updatedLead) => {
     try {

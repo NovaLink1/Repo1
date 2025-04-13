@@ -9,6 +9,10 @@ const LoginForm = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');    // State für Passwort
   const [error, setError] = useState('');          // State für Fehlernachricht
   const [loading, setLoading] = useState(false);   // Ladezustand
+  const user = userCredential.user;
+
+  
+
 
   // Funktion zum Absenden des Formulars
   const handleSubmit = async (e) => {
@@ -21,6 +25,9 @@ const LoginForm = ({ onLoginSuccess }) => {
       // Anmeldung bei Firebase mit E-Mail und Passwort
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      localStorage.setItem("leadnova_uid", user.uid);
+      console.log("🔐 Angemeldeter Nutzer:", user.uid);
 
       // Falls die Anmeldung erfolgreich ist, die Login-Erfolgs-Funktion aufrufen
       onLoginSuccess(user);

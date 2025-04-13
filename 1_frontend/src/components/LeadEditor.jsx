@@ -1,5 +1,3 @@
-// LeadEditor.jsx
-
 import React, { useState, useEffect } from "react";
 
 const LeadEditor = ({ lead, onSave }) => {
@@ -19,12 +17,19 @@ const LeadEditor = ({ lead, onSave }) => {
 
   const handleSave = async () => {
     const token = localStorage.getItem("leadnova_token");
+    const userId = localStorage.getItem("leadnova_uid"); // ✅ Nutzer-ID abrufen
+
     const url = formData.id
       ? `http://localhost:8000/leads/${formData.id}`
       : "http://localhost:8000/leads/";
     const method = formData.id ? "PUT" : "POST";
 
-    console.log("🛰 Sende Lead an Server:", formData);
+    const leadDataToSend = {
+      ...formData,
+      user_id: userId, // ✅ Nutzer-ID anfügen
+    };
+
+    console.log("🛰 Sende Lead an Server:", leadDataToSend);
 
     try {
       const res = await fetch(url, {
@@ -33,7 +38,7 @@ const LeadEditor = ({ lead, onSave }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(leadDataToSend),
       });
 
       const data = await res.json();

@@ -3,6 +3,10 @@ import AppShell from './components/AppShell';
 import LoginForm from './components/LoginForm';
 import { auth } from './firebase/firebase-config';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import RegisterForm from "./components/RegisterForm";
+
+
+
 
 const App = () => {
   const [leads, setLeads] = useState([]);

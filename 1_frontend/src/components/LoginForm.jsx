@@ -1,16 +1,13 @@
-// src/components/LoginForm.jsx
-
 import React, { useState } from 'react';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'; // Importiere Firebase Auth
-import { auth } from '../firebase/firebase-config'; // Firebase-Config importieren
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase/firebase-config";
+
 
 const LoginForm = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('');         // State für E-Mail
-  const [password, setPassword] = useState('');    // State für Passwort
-  const [error, setError] = useState('');          // State für Fehlernachricht
-  const [loading, setLoading] = useState(false);   // Ladezustand
-  const user = userCredential.user;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   
 

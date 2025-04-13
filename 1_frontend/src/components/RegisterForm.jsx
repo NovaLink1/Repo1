@@ -1,8 +1,11 @@
 // src/components/RegisterForm.jsx
 import React, { useState } from "react";
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  sendEmailVerification
+} from "firebase/auth";
 import { auth } from "../firebase/firebase-config"; // dein Pfad zum Firebase Setup
-
 
 const RegisterForm = ({ onRegisterSuccess }) => {
   const [name, setName] = useState("");
@@ -31,39 +34,31 @@ const RegisterForm = ({ onRegisterSuccess }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
-  
+
     if (!validateForm()) return;
-  
+
     setLoading(true);
+
     try {
       const authInstance = getAuth();
-  
-      const userCredential = await createUserWithEmailAndPassword(
-        authInstance,
-        email,
-        password
-      );
-  
-      const user = userCredential.user;
-  
-      await sendEmailVerification(user);
-  
-      // Optional: Speichern von user.displayName (nicht direkt unterstützt, dafür extra update)
-      // await updateProfile(user, { displayName: name });
-  
+      const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+    
+      const user = userCredential.user; // ✅ korrekt definiert
+    
+      await sendEmailVerification(user); // ✅ user verfügbar
       localStorage.setItem("leadnova_uid", user.uid);
       localStorage.setItem("leadnova_token", await user.getIdToken());
-  
+    
       alert("✅ Registrierung erfolgreich! Bitte bestätige deine E-Mail.");
-      onRegisterSuccess(user); // übergebe den Nutzer an App.jsx
+      onRegisterSuccess(user);
     } catch (err) {
       console.error("❌ Fehler bei Registrierung:", err.message);
       setError("❌ " + (err.message || "Unbekannter Fehler"));
     } finally {
       setLoading(false);
     }
+    
   };
-  
 
   return (
     <form onSubmit={handleRegister} className="space-y-4 max-w-sm mx-auto mt-10">

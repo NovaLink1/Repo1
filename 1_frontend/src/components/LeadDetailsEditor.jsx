@@ -151,7 +151,81 @@ const LeadDetailsEditor = ({ lead, onSave, onClose, onDelete }) => {
             className="w-full border rounded px-2 py-1"
           />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+  {/* bestehende Felder */}
+
+  <div>
+    <label>Straße</label>
+    <input
+      type="text"
+      value={formData.strasse || ""}
+      onChange={(e) => handleChange("strasse", e.target.value)}
+      className="w-full border rounded px-2 py-1"
+    />
+  </div>
+
+  <div>
+    <label>PLZ</label>
+    <input
+      type="text"
+      value={formData.plz || ""}
+      onChange={(e) => handleChange("plz", e.target.value)}
+      className="w-full border rounded px-2 py-1"
+    />
+  </div>
+
+  <div>
+    <label>Ort</label>
+    <input
+      type="text"
+      value={formData.ort || ""}
+      onChange={(e) => handleChange("ort", e.target.value)}
+      className="w-full border rounded px-2 py-1"
+    />
+  </div>
+
+  <div>
+    <label>UID</label>
+    <input
+      type="text"
+      value={formData.uid || ""}
+      onChange={(e) => handleChange("uid", e.target.value)}
+      className="w-full border rounded px-2 py-1"
+    />
+  </div>
+
+  <div className="col-span-2">
+    <label>Weitere Adressen</label>
+    <textarea
+      value={formData.weitere_adressen || ""}
+      onChange={(e) => handleChange("weitere_adressen", e.target.value)}
+      className="w-full border rounded px-2 py-1"
+      rows={2}
+    />
+  </div>
+
+  <div className="col-span-2">
+    <label>Anlieferung (Tor)</label>
+    <textarea
+      value={formData.anlieferung_tor || ""}
+      onChange={(e) => handleChange("anlieferung_tor", e.target.value)}
+      className="w-full border rounded px-2 py-1"
+      rows={2}
+    />
+  </div>
+</div>
+
       </div>
+      <div className="col-span-2">
+  <label className="block font-semibold mb-1">📝 Notizen</label>
+  <textarea
+    value={formData.notes || ""}
+    onChange={(e) => handleChange("notes", e.target.value)}
+    className="w-full border border-gray-300 rounded px-2 py-1"
+    rows={4}
+    placeholder="Leadspezifische Notizen hier eingeben..."
+  />
+</div>
 
       
 

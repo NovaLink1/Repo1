@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import AppShell from './components/AppShell';
 import LoginForm from './components/LoginForm';
-import { auth } from './firebase/firebase-config'; // Firebase Auth importieren
-import { signInWithEmailAndPassword } from 'firebase/auth'; // Firebase Anmeldefunktion
+import { auth } from './firebase/firebase-config';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const App = () => {
   const [leads, setLeads] = useState([]);
   const [selectedLead, setSelectedLead] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null); // Speichert den aktuell angemeldeten User
-  const [leadFiles, setLeadFiles] = useState({}); // Dateien für Leads speichern
-  const [error, setError] = useState(""); // Fehlerzustand für Login
-
+  const [user, setUser] = useState(null);
+  const [leadFiles, setLeadFiles] = useState({});
+  const [error, setError] = useState("");
 
   const fetchWithAuth = async (url, options = {}) => {
     const token = localStorage.getItem("leadnova_token");
-  
+
     return fetch(url, {
       ...options,
       headers: {
@@ -25,30 +24,38 @@ const App = () => {
       },
     });
   };
-  
+
   useEffect(() => {
     const token = localStorage.getItem("leadnova_token");
     setIsLoggedIn(!!token);
   }, []);
 
   useEffect(() => {
-    console.log("🧪 Versuche Leads zu laden...");
-  
-    fetchWithAuth("http://localhost:8000/leads/")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("📥 Leads vom Server:", data);
-        setLeads(data);
+    console.log("🚀 useEffect geladen → Lade Leads...");
+
+    fetch("http://localhost:8000/leads")
+      .then(async (res) => {
+        const contentType = res.headers.get("Content-Type");
+        const rawText = await res.text();
+
+        console.log("📦 Content-Type:", contentType);
+        console.log("🧾 Response-Body:", rawText.slice(0, 300));
+
+        if (!res.ok) {
+          throw new Error(`❌ Fehlerstatus ${res.status}`);
+        }
+
+        if (contentType && contentType.includes("application/json")) {
+          const data = JSON.parse(rawText);
+          console.log("✅ JSON geladen:", data);
+          setLeads(data);
+        } else {
+          throw new Error("⚠️ Kein JSON erhalten");
+        }
       })
-      .catch((err) => console.error("❌ Fehler beim Laden der Leads:", err));
+      .catch((err) => console.error("💥 Fehler beim Laden der Leads:", err));
   }, []);
-  
-  useEffect(() => {
-    fetch("/api/userinfo")
-      .then(res => res.json())
-      .then(data => setUser(data));
-  }, []);
-  
+
   const handleUpdateLead = async (updatedLead) => {
     try {
       const res = await fetch(`http://localhost:8000/leads/${updatedLead.id}`, {
@@ -65,7 +72,6 @@ const App = () => {
 
       const savedLead = await res.json();
 
-      // Leadliste aktualisieren
       setLeads((prev) =>
         prev.map((lead) => (lead.id === savedLead.id ? savedLead : lead))
       );
@@ -77,10 +83,9 @@ const App = () => {
   const handleLogout = () => {
     localStorage.removeItem("leadnova_token");
     setIsLoggedIn(false);
-    setUser(null); // Benutzer zurücksetzen
+    setUser(null);
   };
 
-  // Firebase Anmeldung
   const handleLoginSuccess = (user) => {
     console.log("✅ Login success:", user);
     localStorage.setItem("leadnova_token", user.accessToken);
@@ -88,10 +93,7 @@ const App = () => {
     const userInfo = { email: user.email };
     localStorage.setItem("user", JSON.stringify(userInfo));
     setUser(userInfo);
-    
   };
-  
-  
 
   return !isLoggedIn ? (
     <LoginForm onLoginSuccess={handleLoginSuccess} setError={setError} />

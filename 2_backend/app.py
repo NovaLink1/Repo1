@@ -46,24 +46,32 @@ def update_lead(lead_id: str, updated_data: LeadCreate):
     for index, lead in enumerate(leads_db):
         if lead.id == lead_id:
             updated_lead = Lead(
-                id=lead_id,
-                firma=updated_data.firma,
-                branche=updated_data.branche,
-                website=updated_data.website,
-                bewertung=updated_data.bewertung,
-                status=updated_data.status,
-                notes=updated_data.notes,
+    id=lead_id,
+    firma=updated_data.firma,
+    branche=updated_data.branche,
+    website=updated_data.website,
+    bewertung=updated_data.bewertung,
+    status=updated_data.status,
+    notes=updated_data.notes,
 
-                ansprechpartner1=updated_data.ansprechpartner1,
-                position1=updated_data.position1,
-                telefon1=updated_data.telefon1,
-                email1=updated_data.email1,
+    ansprechpartner1=updated_data.ansprechpartner1,
+    position1=updated_data.position1,
+    telefon1=updated_data.telefon1,
+    email1=updated_data.email1,
 
-                ansprechpartner2=updated_data.ansprechpartner2,
-                position2=updated_data.position2,
-                telefon2=updated_data.telefon2,
-                email2=updated_data.email2,
-            )
+    ansprechpartner2=updated_data.ansprechpartner2,
+    position2=updated_data.position2,
+    telefon2=updated_data.telefon2,
+    email2=updated_data.email2,
+    
+    strasse=updated_data.strasse,
+    plz=updated_data.plz,
+    ort=updated_data.ort,
+    uid=updated_data.uid,
+    weitere_adressen=updated_data.weitere_adressen,
+    anlieferung_tor=updated_data.anlieferung_tor,
+)
+
             leads_db[index] = updated_lead
             save_leads(leads_db)
             return updated_lead
@@ -177,8 +185,3 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     token = create_access_token(data={"sub": user["email"]})
     return {"access_token": token, "token_type": "bearer"}
-
-@app.get("/leads", response_model=List[Lead])
-def get_all_leads(current_user=Depends(get_current_user)):
-    return leads_db
-

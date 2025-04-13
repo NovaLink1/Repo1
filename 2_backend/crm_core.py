@@ -21,6 +21,14 @@ class LeadCreate(BaseModel):
     telefon2: Optional[str] = ""
     email2: Optional[str] = ""
 
+    strasse: Optional[str] = None
+    plz: Optional[str] = None
+    ort: Optional[str] = None
+    uid: Optional[str] = None
+    weitere_adressen: Optional[str] = None
+    anlieferung_tor: Optional[str] = None
+
+
 
 
 

@@ -28,16 +28,20 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
 
   useEffect(() => {
     if (activeTab === "docs" && lead?.id) {
-      fetch(`http://localhost:8000/files/${encodeURIComponent(lead.id)}`)
+      fetch(`http://localhost:8000/files/${lead.id}`)
         .then((res) => res.json())
         .then((data) => {
-          setSavedFiles(Array.isArray(data) ? data : []);
+          console.log("📁 Dateien vom Server:", data); // HIER
+          if (Array.isArray(data)) {
+            setSavedFiles(data);
+          } else {
+            setSavedFiles([]);
+          }
         })
-        .catch((err) =>
-          console.error("Fehler beim Laden gespeicherter Dateien:", err)
-        );
+        .catch((err) => console.error("Fehler beim Laden gespeicherter Dateien:", err));
     }
   }, [activeTab, lead]);
+  
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -48,7 +52,7 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
     const updatedLead = {
       ...formData,
       bewertung: parseInt(formData.bewertung) || 0,
-      notizen: formData.notizen, //️ HIER liegt das Problem
+      notes: formData.notes, 
     };
     onSave(updatedLead);  // ➜ wird an App.jsx übergeben
     onClose();
@@ -143,6 +147,8 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
   };
 
   if (!lead) return null;
+
+  console.log("✅ EditLeadPopup aktiv", lead);
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -286,16 +292,18 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
                 </div>
               </div>
             </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notizen</label>
-              <textarea
-                placeholder="Notizen"
-                value={formData.notizen}
-                onChange={(e) => handleChange("notes", e.target.value)}
-                className="w-full border border-gray-300 rounded p-2 text-sm"
-                rows={4}
-              />
-            </div>
+
+<div className="mt-6">
+  <label className="block text-sm font-medium text-gray-700 mb-1">Notizen</label>
+  <textarea
+    placeholder="Notizen"
+    value={formData.notes || ""}
+    onChange={(e) => handleChange("notes", e.target.value)}
+    className="w-full border border-gray-300 rounded p-2 text-sm"
+    rows={4}
+  />
+</div>
+
 
             <div className="flex justify-end space-x-4 pt-4">
               <button

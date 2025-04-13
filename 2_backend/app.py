@@ -140,20 +140,24 @@ def rename_file(lead_id: str, old_name: str, new_name: str):
 
 # --- Datei löschen (Papierkorb verschieben) ---
 @app.delete("/delete/{lead_id}/{filename}")
-def delete_file(lead_id: str, filename: str):
+def delete_file(lead_id: str, filename: str, permanent: bool = False):
     if filename == ".trash":
         raise HTTPException(status_code=403, detail="Systemverzeichnis darf nicht gelöscht werden")
 
     lead_folder = os.path.join(UPLOAD_DIR, f"lead_{lead_id}")
     trash_folder = os.path.join(lead_folder, ".trash")
-    os.makedirs(trash_folder, exist_ok=True)
-
     file_path = os.path.join(lead_folder, filename)
     trash_path = os.path.join(trash_folder, filename)
 
-    if not os.path.exists(file_path):
+    if not os.path.exists(file_path) and not os.path.exists(trash_path):
         raise HTTPException(status_code=404, detail="Datei nicht gefunden")
 
+    if permanent:
+        path_to_delete = file_path if os.path.exists(file_path) else trash_path
+        os.remove(path_to_delete)
+        return {"detail": "Datei dauerhaft gelöscht"}
+
+    os.makedirs(trash_folder, exist_ok=True)
     os.rename(file_path, trash_path)
     return {"detail": "Datei in den Papierkorb verschoben"}
 
@@ -164,6 +168,8 @@ def list_trashed_files(lead_id: str):
     if not os.path.exists(trash_path):
         return []
     return os.listdir(trash_path)
+
+
 
 # --- Datei wiederherstellen ---
 @app.put("/restore/{lead_id}/{filename}")

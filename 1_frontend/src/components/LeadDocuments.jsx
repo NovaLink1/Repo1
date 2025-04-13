@@ -1,4 +1,4 @@
-// LeadDocuments.jsx – mit Drag-and-Drop Upload 🧲
+// LeadDocuments.jsx – Inline-Renaming aktiv ✏️
 
 import React, { useEffect, useState } from "react";
 
@@ -6,6 +6,7 @@ const LeadDocuments = ({ selectedLead }) => {
   const [files, setFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState("");
   const [renameMap, setRenameMap] = useState({});
+  const [editingFile, setEditingFile] = useState(null);
   const [trashedFiles, setTrashedFiles] = useState([]);
   const [showTrash, setShowTrash] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -74,19 +75,20 @@ const LeadDocuments = ({ selectedLead }) => {
     await reloadFiles();
   };
 
-  const handleRename = async (filename) => {
-    const newName = renameMap[filename];
-    if (!newName) return;
+  const handleRename = async (oldName, newName) => {
+    if (!newName || newName === oldName) return;
+
     await fetch(`http://localhost:8000/rename/${selectedLead.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ old_name: filename, new_name: newName }),
+      body: JSON.stringify({ old_name: oldName, new_name: newName }),
     });
-    setRenameMap({ ...renameMap, [filename]: "" });
     await reloadFiles();
+setEditingFile(null);
+
   };
 
   const handleRestore = async (filename) => {
@@ -112,6 +114,10 @@ const LeadDocuments = ({ selectedLead }) => {
 
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredTrashedFiles = trashedFiles.filter((file) =>
+    file.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -143,20 +149,34 @@ const LeadDocuments = ({ selectedLead }) => {
             key={file.name || index}
             className="flex items-center justify-between border p-2 pr-4 rounded mb-2"
           >
-            <span className="flex-1">{file.name}</span>
-            <div className="flex gap-2">
+            {editingFile === file.name ? (
               <input
-                type="text"
-                placeholder="Neuer Name"
-                value={renameMap[file.name] || ""}
-                onChange={(e) =>
-                  setRenameMap({ ...renameMap, [file.name]: e.target.value })
-                }
-                className="border px-2 py-1 rounded text-sm"
+                autoFocus
+                defaultValue={file.name}
+                onBlur={(e) => handleRename(file.name, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleRename(file.name, e.target.value);
+                  }
+                }}
+                className="flex-1 border rounded px-2 py-1 text-sm"
               />
+            ) : (
+              <a
+                href={`http://localhost:8000/download/${selectedLead.id}/${file.name}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 text-blue-700 hover:underline break-all"
+                title="Datei öffnen"
+              >
+                {file.name}
+              </a>
+            )}
+            <div className="flex gap-2 items-center">
               <button
                 title="Umbenennen"
-                onClick={() => handleRename(file.name)}
+                onClick={() => setEditingFile(file.name)}
                 className="text-yellow-600 border border-yellow-600 hover:bg-yellow-50 p-2 rounded-full"
               >
                 ✏️
@@ -180,7 +200,7 @@ const LeadDocuments = ({ selectedLead }) => {
         {showTrash ? "Papierkorb ausblenden" : "Papierkorb anzeigen"}
       </button>
 
-      {showTrash && trashedFiles.length > 0 && (
+      {showTrash && filteredTrashedFiles.length > 0 && (
         <div className="mt-4">
           <h4 className="font-semibold flex justify-between items-center">
             🗑️ Papierkorb
@@ -192,7 +212,7 @@ const LeadDocuments = ({ selectedLead }) => {
             </button>
           </h4>
           <ul className="mt-2">
-            {trashedFiles.map((f) => (
+            {filteredTrashedFiles.map((f) => (
               <li key={f} className="flex justify-between items-center border p-2 pr-4 rounded mt-1">
                 <span className="line-through flex-1">{f}</span>
                 <button

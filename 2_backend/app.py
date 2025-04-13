@@ -1,16 +1,16 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
 from typing import List
 from uuid import uuid4
 from datetime import datetime
+from pydantic import BaseModel
 import os
 from crm_core import Lead, LeadCreate
 from leads_storage import save_leads, load_leads
 from auth import authenticate_user, create_access_token, get_current_user
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends
 
 
 # --- FastAPI Setup ---
@@ -19,12 +19,11 @@ app = FastAPI()
 # --- CORS für Frontend auf Port 5173 ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend erlaubt
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"],  # Alle Methoden erlauben
-    allow_headers=["*"],  # Alle Header erlauben
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
 
 # --- Lead Datenbank ---
 leads_db = load_leads()
@@ -40,44 +39,37 @@ def add_lead(lead_data: LeadCreate):
     save_leads(leads_db)
     return new_lead
 
-
 @app.put("/leads/{lead_id}", response_model=Lead)
 def update_lead(lead_id: str, updated_data: LeadCreate):
     for index, lead in enumerate(leads_db):
         if lead.id == lead_id:
             updated_lead = Lead(
-    id=lead_id,
-    firma=updated_data.firma,
-    branche=updated_data.branche,
-    website=updated_data.website,
-    bewertung=updated_data.bewertung,
-    status=updated_data.status,
-    notes=updated_data.notes,
-
-    ansprechpartner1=updated_data.ansprechpartner1,
-    position1=updated_data.position1,
-    telefon1=updated_data.telefon1,
-    email1=updated_data.email1,
-
-    ansprechpartner2=updated_data.ansprechpartner2,
-    position2=updated_data.position2,
-    telefon2=updated_data.telefon2,
-    email2=updated_data.email2,
-    
-    strasse=updated_data.strasse,
-    plz=updated_data.plz,
-    ort=updated_data.ort,
-    uid=updated_data.uid,
-    weitere_adressen=updated_data.weitere_adressen,
-    anlieferung_tor=updated_data.anlieferung_tor,
-)
-
+                id=lead_id,
+                firma=updated_data.firma,
+                branche=updated_data.branche,
+                website=updated_data.website,
+                bewertung=updated_data.bewertung,
+                status=updated_data.status,
+                notes=updated_data.notes,
+                ansprechpartner1=updated_data.ansprechpartner1,
+                position1=updated_data.position1,
+                telefon1=updated_data.telefon1,
+                email1=updated_data.email1,
+                ansprechpartner2=updated_data.ansprechpartner2,
+                position2=updated_data.position2,
+                telefon2=updated_data.telefon2,
+                email2=updated_data.email2,
+                strasse=updated_data.strasse,
+                plz=updated_data.plz,
+                ort=updated_data.ort,
+                uid=updated_data.uid,
+                weitere_adressen=updated_data.weitere_adressen,
+                anlieferung_tor=updated_data.anlieferung_tor,
+            )
             leads_db[index] = updated_lead
             save_leads(leads_db)
             return updated_lead
     raise HTTPException(status_code=404, detail="Lead nicht gefunden")
-
-
 
 @app.delete("/leads/{lead_id}", response_model=dict)
 def delete_lead(lead_id: str):
@@ -123,17 +115,22 @@ def list_files(lead_id: str):
 # --- Statische Dateien für Vorschau ---
 app.mount("/files", StaticFiles(directory=UPLOAD_DIR), name="files")
 
-# --- Datei umbenennen ---
+# --- Datei umbenennen (mit JSON-Body) ---
+class RenameRequest(BaseModel):
+    old_name: str
+    new_name: str
+
 @app.put("/rename/{lead_id}")
-def rename_file(lead_id: str, old_name: str, new_name: str):
-    dir_path = os.path.join(UPLOAD_DIR, f"lead_{lead_id}")
-    old_path = os.path.join(dir_path, old_name)
-    new_path = os.path.join(dir_path, new_name)
+def rename_file(lead_id: str, req: RenameRequest):
+    lead_folder = os.path.join(UPLOAD_DIR, f"lead_{lead_id}")
+    old_path = os.path.join(lead_folder, req.old_name)
+    new_path = os.path.join(lead_folder, req.new_name)
 
     if not os.path.exists(old_path):
         raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+
     if os.path.exists(new_path):
-        raise HTTPException(status_code=400, detail="Neue Datei existiert bereits")
+        raise HTTPException(status_code=400, detail="Zielname existiert bereits")
 
     os.rename(old_path, new_path)
     return {"detail": "Datei umbenannt"}
@@ -169,8 +166,6 @@ def list_trashed_files(lead_id: str):
         return []
     return os.listdir(trash_path)
 
-
-
 # --- Datei wiederherstellen ---
 @app.put("/restore/{lead_id}/{filename}")
 def restore_file(lead_id: str, filename: str):
@@ -182,6 +177,21 @@ def restore_file(lead_id: str, filename: str):
 
     os.rename(trash_path, restore_path)
     return {"detail": "Datei wiederhergestellt"}
+
+# --- Datei herunterladen ---
+@app.get("/download/{lead_id}/{filename}")
+def download_file(lead_id: str, filename: str):
+    lead_folder = os.path.join(UPLOAD_DIR, f"lead_{lead_id}")
+    file_path = os.path.join(lead_folder, filename)
+
+    if not os.path.exists(file_path):
+        trash_path = os.path.join(lead_folder, ".trash", filename)
+        if os.path.exists(trash_path):
+            file_path = trash_path
+        else:
+            raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+
+    return FileResponse(file_path, filename=filename)
 
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):

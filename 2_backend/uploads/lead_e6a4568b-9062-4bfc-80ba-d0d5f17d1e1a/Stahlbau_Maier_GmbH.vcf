@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Michael Ogris
+ORG:Stahlbau Maier GmbH
+TITLE:Tester
+TEL;TYPE=work,voice:06801532138
+EMAIL:Ogris.Michael@protonmail.com
+ADR;TYPE=work:;;Pfarrbergsiedlung 4/12;Obergrünburg;;4593;Austria
+END:VCARD

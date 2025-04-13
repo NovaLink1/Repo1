@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -11,7 +11,6 @@ import os
 from crm_core import Lead, LeadCreate
 from leads_storage import save_leads, load_leads
 from auth import authenticate_user, create_access_token, get_current_user
-
 
 # --- FastAPI Setup ---
 app = FastAPI()
@@ -27,6 +26,12 @@ app.add_middleware(
 
 # --- Lead Datenbank ---
 leads_db = load_leads()
+
+def get_lead_by_id(lead_id: str):
+    for lead in leads_db:
+        if lead.id == lead_id:
+            return lead
+    return None
 
 @app.get("/leads", response_model=List[Lead])
 def get_all_leads():
@@ -192,6 +197,28 @@ def download_file(lead_id: str, filename: str):
             raise HTTPException(status_code=404, detail="Datei nicht gefunden")
 
     return FileResponse(file_path, filename=filename)
+
+# --- Lead als vCard exportieren ---
+@app.get("/leads/{lead_id}/export/vcard")
+def export_vcard(lead_id: str):
+    lead = get_lead_by_id(lead_id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead nicht gefunden")
+
+    vcard = f"""BEGIN:VCARD
+VERSION:3.0
+FN:{lead.ansprechpartner1}
+ORG:{lead.firma}
+TITLE:{lead.position1}
+TEL;TYPE=work,voice:{lead.telefon1}
+EMAIL:{lead.email1}
+ADR;TYPE=work:;;{lead.strasse};{lead.ort};;{lead.plz};Austria
+END:VCARD
+"""
+
+    return Response(content=vcard, media_type="text/vcard", headers={
+        "Content-Disposition": f"attachment; filename={lead.firma.replace(' ', '_')}.vcf"
+    })
 
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):

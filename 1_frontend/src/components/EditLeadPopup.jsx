@@ -160,10 +160,22 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
           ✖
         </button>
 
-        {lead?.firma && (
-  <h2 className="text-3xl font-bold text-blue-900 mb-6 flex items-center gap-2">
-     {lead.firma}
-  </h2>
+        {console.log("📦 Aktiver Lead:", lead)}
+
+        {lead?.id && lead?.firma && (
+  <div className="mb-6">
+    <h2 className="text-3xl font-bold text-blue-900">{lead.firma}</h2>
+    <a
+      href={`http://localhost:8000/leads/${lead.id}/export/vcard`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-2 inline-block text-green-600 border border-green-600 hover:bg-green-50 px-3 py-1 rounded text-sm"
+      title="Als vCard exportieren"
+      download
+    >
+      💾 vCard exportieren
+    </a>
+  </div>
 )}
 
         <div className="flex space-x-4 mb-6 border-b">

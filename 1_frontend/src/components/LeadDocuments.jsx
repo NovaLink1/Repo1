@@ -122,7 +122,8 @@ setEditingFile(null);
 
   return (
     <div>
-      <h3 className="font-bold mb-2">📎 Dokumente für: {selectedLead?.firma || "-"}</h3>
+     <h3 className="text-xl font-bold mb-4">📎 Dokumente für: {selectedLead?.firma || "-"}</h3>
+
 
       <div
         onDrop={handleDrop}

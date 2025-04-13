@@ -160,7 +160,11 @@ const EditLeadPopup = ({ lead, onClose, onSave }) => {
           ✖
         </button>
 
-        <h2 className="text-2xl font-bold mb-6">Lead bearbeiten</h2>
+        {lead?.firma && (
+  <h2 className="text-3xl font-bold text-blue-900 mb-6 flex items-center gap-2">
+     {lead.firma}
+  </h2>
+)}
 
         <div className="flex space-x-4 mb-6 border-b">
           <button

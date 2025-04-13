@@ -1,4 +1,4 @@
-// LeadDocuments.jsx – Inline-Renaming aktiv ✏️
+// LeadDocuments.jsx – Bereinigt und abgeschlossen
 
 import React, { useEffect, useState } from "react";
 
@@ -10,7 +10,7 @@ const LeadDocuments = ({ selectedLead }) => {
       </div>
     );
   }
-  
+
   const [files, setFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState("");
   const [renameMap, setRenameMap] = useState({});
@@ -22,39 +22,34 @@ const LeadDocuments = ({ selectedLead }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-
-
+  const userId = localStorage.getItem("leadnova_uid");
   const token = localStorage.getItem("leadnova_token");
 
   const reloadFiles = async () => {
     if (!selectedLead) return;
     try {
       const [activeRes, trashRes] = await Promise.all([
-        fetch(`http://localhost:8000/files/${selectedLead.id}`, {
+        fetch(`http://localhost:8000/files/${selectedLead.id}?user_id=${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://localhost:8000/trash/${selectedLead.id}`, {
+        fetch(`http://localhost:8000/trash/${selectedLead.id}?user_id=${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
-      
-      // ✅ NEU: Prüfung einfügen
+
       if (!activeRes.ok || !trashRes.ok) {
-        setErrorMsg("❌ Dateien konnten nicht geladen werden. Bitte prüfen Sie Ihre Verbindung oder Anmeldung.");
-        throw new Error("Fetch nicht ok");
+        setErrorMsg("❌ Dateien konnten nicht geladen werden.");
+        throw new Error("Fehler beim Laden der Dateien");
       }
-      
-      
+
       const active = await activeRes.json();
       const trash = await trashRes.json();
       setFiles(active);
       setTrashedFiles(trash);
-      
     } catch (err) {
-      console.error("❌ Fehler beim Neuladen der Dateien:", err);
-      setErrorMsg("❌ Server nicht erreichbar oder Antwort ungültig.");
+      console.error("❌ Fehler beim Laden:", err);
+      setErrorMsg("❌ Server nicht erreichbar.");
     }
-    
   };
 
   useEffect(() => {
@@ -63,23 +58,23 @@ const LeadDocuments = ({ selectedLead }) => {
     }
   }, [selectedLead]);
 
-
-
   const uploadFileToServer = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      await fetch(`http://localhost:8000/upload/${selectedLead.id}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      await fetch(
+        `http://localhost:8000/upload/${selectedLead.id}?user_id=${userId}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
       await reloadFiles();
     } catch (err) {
-      console.error("❌ Fehler beim Neuladen der Dateien:", err);
-      setErrorMsg("❌ Server nicht erreichbar oder Antwort ungültig.");
+      console.error("❌ Fehler beim Upload:", err);
+      setErrorMsg("❌ Upload fehlgeschlagen.");
     }
-    
   };
 
   const handleDrop = (e) => {
@@ -97,46 +92,57 @@ const LeadDocuments = ({ selectedLead }) => {
   const handleDragLeave = () => setIsDragging(false);
 
   const handleDelete = async (filename) => {
-    await fetch(`http://localhost:8000/delete/${selectedLead.id}/${filename}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetch(
+      `http://localhost:8000/delete/${selectedLead.id}/${filename}?user_id=${userId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     await reloadFiles();
   };
 
   const handleRename = async (oldName, newName) => {
     if (!newName || newName === oldName) return;
 
-    await fetch(`http://localhost:8000/rename/${selectedLead.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ old_name: oldName, new_name: newName }),
-    });
+    await fetch(
+      `http://localhost:8000/rename/${selectedLead.id}?user_id=${userId}&old_name=${encodeURIComponent(
+        oldName
+      )}&new_name=${encodeURIComponent(newName)}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     await reloadFiles();
-setEditingFile(null);
-
+    setEditingFile(null);
   };
 
   const handleRestore = async (filename) => {
-    await fetch(`http://localhost:8000/restore/${selectedLead.id}/${filename}`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetch(
+      `http://localhost:8000/restore/${selectedLead.id}/${filename}?user_id=${userId}`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     await reloadFiles();
   };
 
   const handleEmptyTrash = async () => {
-    const confirm = window.confirm("Möchtest du den Papierkorb wirklich unwiderruflich leeren?");
+    const confirm = window.confirm("Papierkorb wirklich vollständig leeren?");
     if (!confirm) return;
 
     for (const filename of trashedFiles) {
-      await fetch(`http://localhost:8000/delete/${selectedLead.id}/${filename}?permanent=true`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await fetch(
+        `http://localhost:8000/delete/${selectedLead.id}/${filename}?permanent=true&user_id=${userId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
     }
     await reloadFiles();
   };
@@ -151,8 +157,9 @@ setEditingFile(null);
 
   return (
     <div>
-     <h3 className="text-xl font-bold mb-4"> Dokumente für: {selectedLead?.firma || "-"}</h3>
-
+      <h3 className="text-xl font-bold mb-4">
+        Dokumente für: {selectedLead?.firma || "-"}
+      </h3>
 
       <div
         onDrop={handleDrop}
@@ -162,7 +169,9 @@ setEditingFile(null);
           isDragging ? "border-blue-400 bg-blue-50" : "border-gray-300 bg-white"
         }`}
       >
-        {isDragging ? "Lass die Dateien los, um sie hochzuladen" : "Ziehe Dateien hierher zum Hochladen"}
+        {isDragging
+          ? "Lass die Dateien los, um sie hochzuladen"
+          : "Ziehe Dateien hierher zum Hochladen"}
       </div>
 
       <input
@@ -173,60 +182,59 @@ setEditingFile(null);
         className="w-full border border-gray-300 rounded px-3 py-2 mb-4 text-sm"
       />
 
-{loading ? (
-  <p className="text-sm text-gray-600 italic">⏳ Lade Dokumente...</p>
-) : (
-  <ul className="mt-4">
-        {filteredFiles.map((file, index) => (
-          <li
-            key={file.name || index}
-            className="flex items-center justify-between border p-2 pr-4 rounded mb-2"
-          >
-            {editingFile === file.name ? (
-              <input
-                autoFocus
-                defaultValue={file.name}
-                onBlur={(e) => handleRename(file.name, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleRename(file.name, e.target.value);
-                  }
-                }}
-                className="flex-1 border rounded px-2 py-1 text-sm"
-              />
-            ) : (
-              <a
-                href={`http://localhost:8000/download/${selectedLead.id}/${file.name}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 text-blue-700 hover:underline break-all"
-                title="Datei öffnen"
-              >
-                {file.name}
-              </a>
-            )}
-            <div className="flex gap-2 items-center">
-              <button
-                title="Umbenennen"
-                onClick={() => setEditingFile(file.name)}
-                className="text-yellow-600 border border-yellow-600 hover:bg-yellow-50 p-2 rounded-full"
-              >
-                ✏️
-              </button>
-              <button
-                title="Löschen"
-                onClick={() => handleDelete(file.name)}
-                className="text-red-600 border border-red-600 hover:bg-red-50 p-2 rounded-full"
-              >
-                🗑️
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      
-)}
+      {loading ? (
+        <p className="text-sm text-gray-600 italic">⏳ Lade Dokumente...</p>
+      ) : (
+        <ul className="mt-4">
+          {filteredFiles.map((file, index) => (
+            <li
+              key={file.name || index}
+              className="flex items-center justify-between border p-2 pr-4 rounded mb-2"
+            >
+              {editingFile === file.name ? (
+                <input
+                  autoFocus
+                  defaultValue={file.name}
+                  onBlur={(e) => handleRename(file.name, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleRename(file.name, e.target.value);
+                    }
+                  }}
+                  className="flex-1 border rounded px-2 py-1 text-sm"
+                />
+              ) : (
+                <a
+                  href={`http://localhost:8000/download/${selectedLead.id}/${file.name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 text-blue-700 hover:underline break-all"
+                  title="Datei öffnen"
+                >
+                  {file.name}
+                </a>
+              )}
+              <div className="flex gap-2 items-center">
+                <button
+                  title="Umbenennen"
+                  onClick={() => setEditingFile(file.name)}
+                  className="text-yellow-600 border border-yellow-600 hover:bg-yellow-50 p-2 rounded-full"
+                >
+                  ✏️
+                </button>
+                <button
+                  title="Löschen"
+                  onClick={() => handleDelete(file.name)}
+                  className="text-red-600 border border-red-600 hover:bg-red-50 p-2 rounded-full"
+                >
+                  🗑️
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <button
         onClick={() => setShowTrash(!showTrash)}
@@ -248,7 +256,10 @@ setEditingFile(null);
           </h4>
           <ul className="mt-2">
             {filteredTrashedFiles.map((f) => (
-              <li key={f} className="flex justify-between items-center border p-2 pr-4 rounded mt-1">
+              <li
+                key={f}
+                className="flex justify-between items-center border p-2 pr-4 rounded mt-1"
+              >
                 <span className="line-through flex-1">{f}</span>
                 <button
                   title="Wiederherstellen"
